@@ -1,10 +1,12 @@
 using System;
+using System.Diagnostics;
 using System.Net;
 using System.Net.Http;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
 using Polly;
+using Prophy.ApiClient.Diagnostics;
 
 namespace Prophy.ApiClient.Http
 {
@@ -168,6 +170,8 @@ namespace Prophy.ApiClient.Http
 
         private void LogResponse(HttpResponseMessage response, string method, string? requestUri)
         {
+            var statusCode = (int)response.StatusCode;
+            
             if (response.IsSuccessStatusCode)
             {
                 _logger.LogDebug("HTTP {Method} request to {RequestUri} completed successfully. Status: {StatusCode}", 
@@ -178,6 +182,10 @@ namespace Prophy.ApiClient.Http
                 _logger.LogWarning("HTTP {Method} request to {RequestUri} failed. Status: {StatusCode}, Reason: {ReasonPhrase}", 
                     method, requestUri, response.StatusCode, response.ReasonPhrase);
             }
+
+            // Record metrics
+            DiagnosticEvents.Metrics.IncrementCounter($"http.requests.{method.ToLowerInvariant()}.{statusCode}");
+            DiagnosticEvents.Metrics.IncrementCounter($"http.requests.{method.ToLowerInvariant()}.{(response.IsSuccessStatusCode ? "success" : "failure")}");
         }
 
         private static bool IsTransientHttpFailure(HttpResponseMessage response)

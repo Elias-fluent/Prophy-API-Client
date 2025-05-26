@@ -41,6 +41,12 @@ Task Master offers two primary ways to interact:
 -   Implement code following task details, dependencies, and project standards
 -   Verify tasks according to test strategies before marking as complete (See [`tests.mdc`](mdc:.cursor/rules/tests.mdc))
 -   Mark completed tasks with `set_task_status` / `task-master set-status --id=<id> --status=done` (see [`taskmaster.mdc`](mdc:.cursor/rules/taskmaster.mdc))
+-   **MANDATORY: Commit and Push After Task Completion** - After marking any task as 'done', you MUST immediately commit all changes and push to the repository:
+    -   Stage all changes: `git add .`
+    -   Create a descriptive commit message that includes the task ID and summary of work completed
+    -   Commit the changes: `git commit -m "feat(module): Complete task #<id> - <brief description>"`
+    -   Push to repository: `git push`
+    -   This ensures all completed work is immediately preserved and available to the team
 -   Update dependent tasks when implementation differs from original plan using `update` / `task-master update --from=<id> --prompt="..."` or `update_task` / `task-master update-task --id=<id> --prompt="..."` (see [`taskmaster.mdc`](mdc:.cursor/rules/taskmaster.mdc))
 -   Add new tasks discovered during implementation using `add_task` / `task-master add-task --prompt="..." --research` (see [`taskmaster.mdc`](mdc:.cursor/rules/taskmaster.mdc)).
 -   Add new subtasks as needed using `add_subtask` / `task-master add-subtask --parent=<id> --title="..."` (see [`taskmaster.mdc`](mdc:.cursor/rules/taskmaster.mdc)).

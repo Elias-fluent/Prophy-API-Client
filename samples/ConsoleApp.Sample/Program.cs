@@ -78,10 +78,18 @@ namespace ConsoleApp.Sample
                 await customFieldDemo.RunAllDemosAsync();
                 Console.WriteLine();
 
+                // Demonstrate webhook functionality
+                Console.WriteLine("Running webhook demonstration...");
+                Console.WriteLine();
+                var webhookDemo = new WebhookDemo(client);
+                await webhookDemo.RunAsync();
+                Console.WriteLine();
+
                 Console.WriteLine("Next steps:");
                 Console.WriteLine("- Task 6: Implement journal recommendation API");
                 Console.WriteLine("- Task 7: Implement author groups management");
                 Console.WriteLine("- ✅ Task 9: Custom fields handling (COMPLETED)");
+                Console.WriteLine("- ✅ Task 10: Webhook support (COMPLETED)");
                 Console.WriteLine();
             }
             catch (Exception ex)

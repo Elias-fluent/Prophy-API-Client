@@ -25,6 +25,7 @@ namespace Prophy.ApiClient
         // API Modules
         private readonly Lazy<IManuscriptModule> _manuscripts;
         private readonly Lazy<ICustomFieldModule> _customFields;
+        private readonly Lazy<IWebhookModule> _webhooks;
 
         /// <summary>
         /// Gets the base URL for the Prophy API.
@@ -45,6 +46,11 @@ namespace Prophy.ApiClient
         /// Gets the custom fields module for custom field operations.
         /// </summary>
         public ICustomFieldModule CustomFields => _customFields.Value;
+
+        /// <summary>
+        /// Gets the webhook module for webhook processing and event handling.
+        /// </summary>
+        public IWebhookModule Webhooks => _webhooks.Value;
 
         /// <summary>
         /// Initializes a new instance of the ProphyApiClient class with the specified API key and organization code.
@@ -101,6 +107,7 @@ namespace Prophy.ApiClient
             // Initialize API modules
             _manuscripts = new Lazy<IManuscriptModule>(() => CreateManuscriptModule());
             _customFields = new Lazy<ICustomFieldModule>(() => CreateCustomFieldModule());
+            _webhooks = new Lazy<IWebhookModule>(() => CreateWebhookModule());
 
             _logger.LogInformation("ProphyApiClient initialized for organization: {OrganizationCode}, Base URL: {BaseUrl}", 
                 OrganizationCode, BaseUrl);
@@ -155,6 +162,7 @@ namespace Prophy.ApiClient
             // Initialize API modules
             _manuscripts = new Lazy<IManuscriptModule>(() => CreateManuscriptModule());
             _customFields = new Lazy<ICustomFieldModule>(() => CreateCustomFieldModule());
+            _webhooks = new Lazy<IWebhookModule>(() => CreateWebhookModule());
 
             _logger.LogInformation("ProphyApiClient initialized for organization: {OrganizationCode}, Base URL: {BaseUrl}", 
                 OrganizationCode, BaseUrl);
@@ -198,6 +206,7 @@ namespace Prophy.ApiClient
             // Initialize API modules
             _manuscripts = new Lazy<IManuscriptModule>(() => CreateManuscriptModule());
             _customFields = new Lazy<ICustomFieldModule>(() => CreateCustomFieldModule());
+            _webhooks = new Lazy<IWebhookModule>(() => CreateWebhookModule());
 
             _logger.LogInformation("ProphyApiClient initialized for organization: {OrganizationCode}, Base URL: {BaseUrl}", 
                 organizationCode, BaseUrl);
@@ -305,6 +314,21 @@ namespace Prophy.ApiClient
             var customFieldLogger = Microsoft.Extensions.Logging.Abstractions.NullLogger<CustomFieldModule>.Instance;
             
             return new CustomFieldModule(_httpClient, _authenticator, jsonSerializer, customFieldLogger);
+        }
+
+        /// <summary>
+        /// Creates a new instance of the webhook module.
+        /// </summary>
+        /// <returns>A configured webhook module instance.</returns>
+        private IWebhookModule CreateWebhookModule()
+        {
+            var validatorLogger = Microsoft.Extensions.Logging.Abstractions.NullLogger<WebhookValidator>.Instance;
+            var validator = new WebhookValidator(validatorLogger);
+            
+            var jsonSerializer = SerializationFactory.CreateJsonSerializer();
+            var webhookLogger = Microsoft.Extensions.Logging.Abstractions.NullLogger<WebhookModule>.Instance;
+            
+            return new WebhookModule(validator, jsonSerializer, webhookLogger);
         }
 
         private void ThrowIfDisposed()

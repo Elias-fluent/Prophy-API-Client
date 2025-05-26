@@ -399,4 +399,9 @@ FodyWeavers.xsd
 # Environment files with secrets
 .env
 .env.local
-.env.production 
+.env.production
+
+# Added by Claude Task Master
+# Task files
+tasks.json
+tasks/ 

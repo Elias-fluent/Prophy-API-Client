@@ -1,0 +1,428 @@
+# Prophy API Client Library - Product Requirements Document
+
+## Overview
+
+The Prophy API Client Library is a lightweight .NET Standard 2.0 class library designed to abstract and simplify integration with the Prophy API from any compatible .NET application, including legacy .NET Framework 4.8 projects. The library encapsulates HTTP requests, authentication handling, and strongly typed data models to enable seamless Prophy API consumption in a consistent and reusable way.
+
+Prophy is a Scientific Knowledge Management platform that provides peer-review solutions for granting agencies and publishers. Their API enables integration with the Prophy platform, providing Referee Finder capabilities, manuscript management, journal recommendations, author group management, and webhook notifications.
+
+The client library will provide a clean, intuitive interface for .NET developers to interact with all Prophy API functionalities without dealing with low-level HTTP operations, JSON serialization, or authentication complexities.
+
+## Core Features
+
+### 1. Authentication Management
+- **API Key Authentication**: Seamless handling of X-ApiKey header authentication
+- **JWT Token Generation**: Support for JWT-based user login with configurable claims
+- **Organization Context**: Multi-organization support with isolated API key management
+- **Automatic Header Management**: Transparent injection of authentication headers in all requests
+
+### 2. Manuscript Management
+- **Manuscript Upload**: Upload PDF/DOCX manuscripts with metadata and receive referee candidates
+- **Multipart Form Data**: Handle complex file uploads with associated metadata
+- **Referee Candidate Retrieval**: Strongly typed models for referee suggestions with scoring and filtering
+- **Manuscript Metadata**: Support for title, abstract, authors, custom fields, and filtering parameters
+- **Conflict of Interest Detection**: Built-in support for COI flagging and exclusion parameters
+
+### 3. Journal Recommendation System
+- **Content-Based Recommendations**: Get journal suggestions based on manuscript analysis
+- **Corpus Selection**: Support for all journals or organization-specific journal pools
+- **Relevance Scoring**: Access to relevance scores and publisher information
+- **Related Articles**: Retrieve relevant articles for each recommended journal
+
+### 4. Author Groups Management
+- **Group Creation**: Create and configure author groups with team-based permissions
+- **Author Management**: Full CRUD operations for authors within groups
+- **Custom Fields Support**: Handle dynamic custom fields with various data types
+- **Partial Updates**: Support for incremental author data updates
+- **Author Linking**: Automatic author disambiguation and profile linking
+
+### 5. Custom Fields Integration
+- **Dynamic Field Discovery**: Retrieve organization-specific custom field definitions
+- **Type-Safe Handling**: Support for number, string, date, single-option, and multi-option fields
+- **Validation**: Built-in validation for custom field data types and constraints
+
+### 6. Webhook Support
+- **Event Handling**: Process webhook notifications for manuscript referee marking events
+- **Payload Validation**: Verify webhook authenticity using API keys
+- **Retry Logic**: Handle webhook delivery failures with exponential backoff
+- **Event Serialization**: Strongly typed models for all webhook event types
+
+### 7. User Login & JWT Integration
+- **JWT Generation**: Create signed JWT tokens for seamless user authentication
+- **Claims Management**: Support for all required JWT claims (sub, organization, email, etc.)
+- **Redirect Handling**: Generate proper login URLs with embedded JWT tokens
+- **Session Management**: Handle time-limited sessions and manuscript access
+
+## User Experience
+
+### Primary User Personas
+1. **Enterprise Developers**: Building manuscript management systems for publishers
+2. **Academic Platform Developers**: Integrating peer review capabilities into research platforms
+3. **Grant Management System Developers**: Adding referee finding to funding agency platforms
+4. **Independent Developers**: Creating specialized tools for academic workflows
+
+### Key User Flows
+
+#### Manuscript Upload and Referee Finding Flow
+```csharp
+var client = new ProphyApiClient(apiKey, organizationCode);
+var manuscript = new ManuscriptUploadRequest
+{
+    Title = "Research Paper Title",
+    Abstract = "Paper abstract...",
+    Authors = new[] { 
+        new Author { Name = "John Doe", Email = "john@university.edu" }
+    },
+    SourceFile = fileBytes,
+    Folder = "journal-name"
+};
+
+var result = await client.Manuscripts.UploadAsync(manuscript);
+var referees = result.Candidates; // Strongly typed referee list
+```
+
+#### Author Group Management Flow
+```csharp
+var groupRequest = new CreateAuthorGroupRequest
+{
+    GroupName = "2024 Physics Experts",
+    OwnerTeam = "Admin Team",
+    EditorTeams = new[] { "Editorial Board" },
+    ViewerTeams = new[] { "Review Committee" }
+};
+
+var group = await client.AuthorGroups.CreateAsync(groupRequest);
+var author = new AuthorFromGroupRequest
+{
+    Name = "Dr. Jane Smith",
+    Emails = new[] { "jane@university.edu" },
+    Orcids = new[] { "0000-0000-0000-0001" }
+};
+
+await client.AuthorGroups.AddAuthorAsync(group.Id, "client-id-123", author);
+```
+
+#### JWT User Login Flow
+```csharp
+var jwtClaims = new JwtLoginClaims
+{
+    Subject = "Organization Name",
+    Organization = "org-code",
+    Email = "user@example.com",
+    Folder = "manuscript-folder",
+    OriginId = "manuscript-123"
+};
+
+var loginUrl = client.Authentication.GenerateLoginUrl(jwtClaims, jwtSecret);
+// Redirect user to loginUrl for seamless Prophy access
+```
+
+### UI/UX Considerations
+- **Fluent API Design**: Method chaining and intuitive naming conventions
+- **Async/Await Pattern**: Full async support for all operations
+- **Error Handling**: Comprehensive exception hierarchy with detailed error information
+- **Progress Reporting**: Support for upload progress tracking and cancellation tokens
+- **Intellisense Support**: Rich XML documentation for all public APIs
+
+## Technical Architecture
+
+### System Components
+
+#### Core Client Architecture
+```
+ProphyApiClient (Main Entry Point)
+├── Authentication Module
+│   ├── ApiKeyAuthenticator
+│   ├── JwtTokenGenerator
+│   └── OrganizationContextManager
+├── HTTP Client Wrapper
+│   ├── HttpClientFactory Integration
+│   ├── Retry Policy Handler
+│   ├── Rate Limiting Handler
+│   └── Request/Response Interceptors
+├── API Modules
+│   ├── ManuscriptModule
+│   ├── JournalRecommendationModule
+│   ├── AuthorGroupModule
+│   ├── CustomFieldModule
+│   └── WebhookModule
+└── Serialization Layer
+    ├── JsonConverters
+    ├── MultipartFormDataBuilder
+    └── CustomFieldSerializer
+```
+
+#### Data Models Hierarchy
+```
+Models Namespace
+├── Requests
+│   ├── ManuscriptUploadRequest
+│   ├── CreateAuthorGroupRequest
+│   ├── AuthorFromGroupRequest
+│   └── JwtLoginClaims
+├── Responses
+│   ├── ManuscriptUploadResponse
+│   ├── JournalRecommendationResponse
+│   ├── AuthorGroupResponse
+│   └── CustomFieldResponse
+├── Entities
+│   ├── Manuscript
+│   ├── RefereeCandidate
+│   ├── Journal
+│   ├── Author
+│   └── CustomField
+└── Webhooks
+    ├── WebhookPayload
+    ├── MarkAsRefereeEvent
+    └── WebhookValidator
+```
+
+### Data Models
+
+#### Core Entities
+- **Manuscript**: ID, title, abstract, authors, status, debug info
+- **RefereeCandidate**: Author details, metrics (h-index, citations), relevance score, COI flags
+- **Journal**: ID, title, publisher, relevance score, related articles
+- **Author**: Name components, contact info, affiliations, publication metrics
+- **AuthorGroup**: ID, name, permissions, member count
+- **CustomField**: API ID, data type, name, description, options
+
+#### Request/Response Models
+- **Strongly Typed**: All API endpoints have corresponding request/response models
+- **Validation Attributes**: Built-in validation for required fields and data constraints
+- **Serialization Attributes**: Proper JSON property mapping and custom converters
+- **Nullable Support**: Appropriate nullable reference types for optional fields
+
+### APIs and Integrations
+
+#### HTTP Client Configuration
+- **HttpClientFactory**: Proper dependency injection support
+- **Base Address**: Configurable API base URL (default: https://www.prophy.ai/api/)
+- **Timeout Configuration**: Configurable request timeouts with sensible defaults
+- **Retry Policies**: Exponential backoff for transient failures
+- **Rate Limiting**: Built-in rate limiting to respect API quotas
+
+#### Authentication Integration
+- **API Key Management**: Secure storage and automatic header injection
+- **JWT Library Integration**: Use System.IdentityModel.Tokens.Jwt for token generation
+- **Multi-Organization**: Support for multiple API keys per client instance
+
+#### Serialization Strategy
+- **System.Text.Json**: Primary JSON serialization with custom converters
+- **Newtonsoft.Json**: Optional fallback for complex scenarios
+- **Custom Field Handling**: Dynamic serialization for organization-specific fields
+- **File Upload**: Multipart form data handling for manuscript uploads
+
+### Infrastructure Requirements
+
+#### .NET Standard 2.0 Compatibility
+- **Framework Support**: .NET Framework 4.6.1+, .NET Core 2.0+, .NET 5+
+- **Package Dependencies**: Minimal external dependencies for broad compatibility
+- **API Surface**: Clean, modern API design following .NET conventions
+
+#### NuGet Package Structure
+```
+Prophy.ApiClient/
+├── src/
+│   ├── Prophy.ApiClient/
+│   │   ├── ProphyApiClient.cs
+│   │   ├── Configuration/
+│   │   ├── Authentication/
+│   │   ├── Modules/
+│   │   ├── Models/
+│   │   ├── Serialization/
+│   │   └── Extensions/
+│   └── Prophy.ApiClient.Extensions.DependencyInjection/
+├── tests/
+│   ├── Prophy.ApiClient.Tests/
+│   └── Prophy.ApiClient.IntegrationTests/
+├── samples/
+│   ├── ConsoleApp.Sample/
+│   ├── AspNetCore.Sample/
+│   └── WinForms.Sample/
+└── docs/
+    ├── api-reference/
+    ├── getting-started.md
+    └── examples/
+```
+
+## Development Roadmap
+
+### Phase 1: Foundation & Core API (MVP)
+**Scope**: Essential functionality for manuscript upload and referee finding
+- HTTP client infrastructure with authentication
+- Manuscript upload API with file handling
+- Referee candidate retrieval and filtering
+- Basic error handling and logging
+- Core data models and serialization
+- Unit tests for core functionality
+- Basic documentation and samples
+
+**Deliverables**:
+- ProphyApiClient core class
+- ManuscriptModule with upload/retrieve capabilities
+- Authentication system with API key support
+- Strongly typed models for manuscripts and candidates
+- NuGet package with basic functionality
+
+### Phase 2: Extended API Coverage
+**Scope**: Complete API surface coverage
+- Journal recommendation API
+- Author groups management (CRUD operations)
+- Custom fields discovery and handling
+- JWT-based user login system
+- Webhook payload models and validation
+- Enhanced error handling with specific exceptions
+- Integration tests with mock server
+
+**Deliverables**:
+- JournalRecommendationModule
+- AuthorGroupModule with full CRUD
+- CustomFieldModule
+- JWT authentication support
+- Webhook handling infrastructure
+- Comprehensive test suite
+
+### Phase 3: Advanced Features & Developer Experience
+**Scope**: Production-ready features and excellent DX
+- Dependency injection extensions for ASP.NET Core
+- Configuration system with appsettings.json support
+- Advanced retry policies and circuit breakers
+- Request/response logging and diagnostics
+- Performance optimizations and caching
+- Comprehensive documentation and samples
+- XML documentation for IntelliSense
+
+**Deliverables**:
+- DI container extensions
+- Configuration providers
+- Logging and diagnostics
+- Performance benchmarks
+- Complete documentation site
+- Sample applications for different scenarios
+
+### Phase 4: Enterprise Features
+**Scope**: Enterprise-grade capabilities
+- Multi-tenant support with organization isolation
+- Advanced webhook handling with event sourcing
+- Bulk operations for large-scale integrations
+- Health checks and monitoring integration
+- Advanced caching strategies
+- Security enhancements and audit logging
+- Performance monitoring and metrics
+
+**Deliverables**:
+- Multi-tenant architecture
+- Bulk operation APIs
+- Health check providers
+- Monitoring and metrics
+- Security audit features
+- Enterprise documentation
+
+## Logical Dependency Chain
+
+### Foundation First (Phase 1)
+1. **HTTP Infrastructure**: Core HTTP client, authentication, basic error handling
+2. **Serialization Layer**: JSON handling, custom converters, multipart form data
+3. **Core Models**: Essential data models for manuscripts, authors, candidates
+4. **Manuscript API**: Upload functionality with file handling and metadata
+5. **Basic Testing**: Unit tests for core functionality
+6. **Initial Package**: First NuGet release with basic capabilities
+
+### API Expansion (Phase 2)
+7. **Journal Recommendations**: Extend with journal suggestion capabilities
+8. **Author Groups**: Complete CRUD operations for author management
+9. **Custom Fields**: Dynamic field handling and validation
+10. **JWT Authentication**: User login and session management
+11. **Webhook Support**: Event handling and payload validation
+12. **Integration Testing**: End-to-end testing with real API
+
+### Developer Experience (Phase 3)
+13. **Configuration System**: Flexible configuration with multiple sources
+14. **Dependency Injection**: ASP.NET Core integration and DI support
+15. **Advanced Error Handling**: Comprehensive exception hierarchy
+16. **Logging and Diagnostics**: Detailed logging and request tracing
+17. **Documentation**: Complete API documentation and samples
+18. **Performance Optimization**: Caching, connection pooling, async optimization
+
+### Enterprise Ready (Phase 4)
+19. **Multi-Tenancy**: Organization isolation and context management
+20. **Bulk Operations**: High-volume data processing capabilities
+21. **Monitoring Integration**: Health checks, metrics, and observability
+22. **Security Enhancements**: Advanced security features and audit trails
+23. **Production Hardening**: Rate limiting, circuit breakers, resilience patterns
+
+## Risks and Mitigations
+
+### Technical Challenges
+
+**Risk**: Complex multipart form data handling for manuscript uploads
+**Mitigation**: Use proven libraries like HttpClient with MultipartFormDataContent, extensive testing with various file types and sizes
+
+**Risk**: Dynamic custom field serialization complexity
+**Mitigation**: Implement flexible serialization strategy with custom JsonConverters, provide clear documentation for custom field handling
+
+**Risk**: JWT token generation and validation complexity
+**Mitigation**: Use established JWT libraries (System.IdentityModel.Tokens.Jwt), provide helper methods for common scenarios
+
+**Risk**: Webhook signature validation and security
+**Mitigation**: Implement proper HMAC validation, provide secure webhook handling examples
+
+### API Evolution and Compatibility
+
+**Risk**: Prophy API changes breaking client library
+**Mitigation**: Version API client library, implement backward compatibility layers, monitor API changes closely
+
+**Risk**: Rate limiting and API quotas
+**Mitigation**: Implement intelligent retry policies, provide rate limiting guidance, add request throttling capabilities
+
+### Development and Maintenance
+
+**Risk**: .NET Standard 2.0 limitations
+**Mitigation**: Careful dependency selection, polyfills for missing APIs, comprehensive testing across target frameworks
+
+**Risk**: Complex testing scenarios with external API
+**Mitigation**: Mock server for integration tests, comprehensive unit test coverage, provide test utilities for consumers
+
+## Appendix
+
+### API Endpoint Coverage
+
+Based on the official Prophy API documentation (https://www.prophy.ai/api-docs/), the client library will cover:
+
+1. **Authentication**: X-ApiKey header authentication
+2. **Manuscript Upload**: POST /api/external/proposal/ with multipart form data
+3. **Journal Recommendations**: GET /api/external/recommend-journals/{origin_id}/
+4. **Custom Fields**: GET /api/external/custom-fields/all/
+5. **Author Groups**: POST /api/external/authors-group/create/
+6. **Authors from Groups**: Full CRUD at /api/external/author-from-group/{group_id}/{client_id}/
+7. **User Login**: JWT-based login at /api/auth/api-jwt-login/
+8. **Webhooks**: mark_as_proposal_referee event handling
+
+### Technology Stack
+
+- **.NET Standard 2.0**: Maximum compatibility across .NET ecosystems
+- **System.Text.Json**: Primary JSON serialization (with Newtonsoft.Json fallback)
+- **System.IdentityModel.Tokens.Jwt**: JWT token generation and validation
+- **Microsoft.Extensions.Http**: HttpClientFactory integration
+- **Microsoft.Extensions.DependencyInjection**: DI container support
+- **Microsoft.Extensions.Logging**: Structured logging support
+- **xUnit**: Unit and integration testing framework
+- **Moq**: Mocking framework for unit tests
+- **WireMock.Net**: HTTP API mocking for integration tests
+
+### Performance Considerations
+
+- **Connection Pooling**: Leverage HttpClientFactory for efficient connection reuse
+- **Async/Await**: Full async support to prevent thread blocking
+- **Memory Efficiency**: Stream-based file uploads for large manuscripts
+- **Caching**: Optional response caching for custom fields and static data
+- **Compression**: Support for gzip compression in HTTP requests/responses
+
+### Security Features
+
+- **API Key Protection**: Secure storage recommendations and best practices
+- **JWT Security**: Proper token signing and validation
+- **HTTPS Enforcement**: Require HTTPS for all API communications
+- **Input Validation**: Comprehensive validation for all request parameters
+- **Webhook Validation**: HMAC signature verification for webhook authenticity 

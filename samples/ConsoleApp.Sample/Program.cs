@@ -51,10 +51,17 @@ namespace ConsoleApp.Sample
 
                 Console.WriteLine("🎉 HTTP infrastructure is working correctly!");
                 Console.WriteLine();
+
+                // Demonstrate the serialization layer
+                Console.WriteLine("Running serialization layer demonstration...");
+                Console.WriteLine();
+                await SerializationDemo.RunAsync(logger);
+                Console.WriteLine();
+
                 Console.WriteLine("Next steps:");
-                Console.WriteLine("- Task 3: Implement serialization layer");
                 Console.WriteLine("- Task 4: Define core data models");
                 Console.WriteLine("- Task 5: Implement manuscript upload API");
+                Console.WriteLine("- Task 6: Implement journal recommendation API");
                 Console.WriteLine();
             }
             catch (Exception ex)

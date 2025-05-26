@@ -1,6 +1,6 @@
 # Task ID: 4
 # Title: Define Core Data Models
-# Status: pending
+# Status: done
 # Dependencies: 3
 # Priority: high
 # Description: Create strongly-typed models for manuscripts, authors, and referee candidates.

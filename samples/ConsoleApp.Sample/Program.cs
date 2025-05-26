@@ -58,10 +58,30 @@ namespace ConsoleApp.Sample
                 await SerializationDemo.RunAsync(logger);
                 Console.WriteLine();
 
+                // Demonstrate manuscript upload functionality
+                Console.WriteLine("Running manuscript upload demonstration...");
+                Console.WriteLine();
+                await ManuscriptDemo.RunAsync(client, logger);
+                Console.WriteLine();
+
+                // Demonstrate configuration system
+                Console.WriteLine("Running configuration system demonstration...");
+                Console.WriteLine();
+                await ConfigurationDemo.RunAsync(logger);
+                Console.WriteLine();
+
+                // Demonstrate custom fields functionality
+                Console.WriteLine("Running custom fields demonstration...");
+                Console.WriteLine();
+                var customFieldLogger = loggerFactory.CreateLogger<CustomFieldDemo>();
+                var customFieldDemo = new CustomFieldDemo(client, customFieldLogger);
+                await customFieldDemo.RunAllDemosAsync();
+                Console.WriteLine();
+
                 Console.WriteLine("Next steps:");
-                Console.WriteLine("- Task 4: Define core data models");
-                Console.WriteLine("- Task 5: Implement manuscript upload API");
                 Console.WriteLine("- Task 6: Implement journal recommendation API");
+                Console.WriteLine("- Task 7: Implement author groups management");
+                Console.WriteLine("- ✅ Task 9: Custom fields handling (COMPLETED)");
                 Console.WriteLine();
             }
             catch (Exception ex)

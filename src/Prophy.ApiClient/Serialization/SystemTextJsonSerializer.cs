@@ -187,6 +187,7 @@ namespace Prophy.ApiClient.Serialization
             };
 
             // Add custom converters for specific types
+            options.Converters.Add(new CustomFieldDataTypeConverter());
             options.Converters.Add(new JsonStringEnumConverter());
             
             return options;

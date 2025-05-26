@@ -1,8 +1,12 @@
 using System;
+using System.Linq;
 using System.Net.Http;
 using Microsoft.Extensions.Logging;
 using Prophy.ApiClient.Authentication;
+using Prophy.ApiClient.Configuration;
 using Prophy.ApiClient.Http;
+using Prophy.ApiClient.Modules;
+using Prophy.ApiClient.Serialization;
 
 namespace Prophy.ApiClient
 {
@@ -18,6 +22,10 @@ namespace Prophy.ApiClient
         private readonly bool _disposeHttpClient;
         private bool _disposed;
 
+        // API Modules
+        private readonly Lazy<IManuscriptModule> _manuscripts;
+        private readonly Lazy<ICustomFieldModule> _customFields;
+
         /// <summary>
         /// Gets the base URL for the Prophy API.
         /// </summary>
@@ -26,7 +34,17 @@ namespace Prophy.ApiClient
         /// <summary>
         /// Gets the organization code associated with this client instance.
         /// </summary>
-        public string OrganizationCode => _authenticator.OrganizationCode;
+        public string OrganizationCode { get; private set; }
+
+        /// <summary>
+        /// Gets the manuscript module for manuscript operations.
+        /// </summary>
+        public IManuscriptModule Manuscripts => _manuscripts.Value;
+
+        /// <summary>
+        /// Gets the custom fields module for custom field operations.
+        /// </summary>
+        public ICustomFieldModule CustomFields => _customFields.Value;
 
         /// <summary>
         /// Initializes a new instance of the ProphyApiClient class with the specified API key and organization code.
@@ -38,6 +56,108 @@ namespace Prophy.ApiClient
         public ProphyApiClient(string apiKey, string organizationCode, string? baseUrl = null, ILogger<ProphyApiClient>? logger = null)
             : this(apiKey, organizationCode, CreateDefaultHttpClient(baseUrl), true, logger)
         {
+        }
+
+        /// <summary>
+        /// Initializes a new instance of the ProphyApiClient class with a configuration object.
+        /// </summary>
+        /// <param name="configuration">The configuration object containing all client settings.</param>
+        /// <param name="logger">Optional logger instance. If not provided, a null logger will be used.</param>
+        /// <exception cref="ArgumentNullException">Thrown when configuration is null.</exception>
+        /// <exception cref="ArgumentException">Thrown when configuration is invalid.</exception>
+        public ProphyApiClient(IProphyApiClientConfiguration configuration, ILogger<ProphyApiClient>? logger = null)
+        {
+            if (configuration == null)
+                throw new ArgumentNullException(nameof(configuration));
+
+            // Validate configuration
+            var validationErrors = configuration.Validate().ToList();
+            if (validationErrors.Any())
+            {
+                throw new ArgumentException($"Configuration is invalid: {string.Join(", ", validationErrors)}", nameof(configuration));
+            }
+
+            var httpClient = CreateHttpClientFromConfiguration(configuration);
+            
+            _logger = logger ?? Microsoft.Extensions.Logging.Abstractions.NullLogger<ProphyApiClient>.Instance;
+            _disposeHttpClient = true;
+            OrganizationCode = configuration.OrganizationCode!;
+
+            // Set base URL
+            BaseUrl = httpClient.BaseAddress ?? new Uri(configuration.BaseUrl!);
+            if (httpClient.BaseAddress == null)
+            {
+                httpClient.BaseAddress = BaseUrl;
+            }
+
+            // Create authenticator
+            var authenticatorLogger = Microsoft.Extensions.Logging.Abstractions.NullLogger<ApiKeyAuthenticator>.Instance;
+            _authenticator = new ApiKeyAuthenticator(configuration.ApiKey!, authenticatorLogger);
+
+            // Create HTTP client wrapper
+            var httpClientLogger = Microsoft.Extensions.Logging.Abstractions.NullLogger<HttpClientWrapper>.Instance;
+            _httpClient = new HttpClientWrapper(httpClient, httpClientLogger);
+
+            // Initialize API modules
+            _manuscripts = new Lazy<IManuscriptModule>(() => CreateManuscriptModule());
+            _customFields = new Lazy<ICustomFieldModule>(() => CreateCustomFieldModule());
+
+            _logger.LogInformation("ProphyApiClient initialized for organization: {OrganizationCode}, Base URL: {BaseUrl}", 
+                OrganizationCode, BaseUrl);
+        }
+
+        /// <summary>
+        /// Initializes a new instance of the ProphyApiClient class with a configuration object and custom HttpClient.
+        /// </summary>
+        /// <param name="configuration">The configuration object containing all client settings.</param>
+        /// <param name="httpClient">The HttpClient instance to use for HTTP operations.</param>
+        /// <param name="disposeHttpClient">Whether to dispose the HttpClient when this instance is disposed.</param>
+        /// <param name="logger">Optional logger instance. If not provided, a null logger will be used.</param>
+        /// <exception cref="ArgumentNullException">Thrown when configuration or httpClient is null.</exception>
+        /// <exception cref="ArgumentException">Thrown when configuration is invalid.</exception>
+        public ProphyApiClient(IProphyApiClientConfiguration configuration, HttpClient httpClient, bool disposeHttpClient = false, ILogger<ProphyApiClient>? logger = null)
+        {
+            if (configuration == null)
+                throw new ArgumentNullException(nameof(configuration));
+
+            if (httpClient == null)
+                throw new ArgumentNullException(nameof(httpClient));
+
+            // Validate configuration
+            var validationErrors = configuration.Validate().ToList();
+            if (validationErrors.Any())
+            {
+                throw new ArgumentException($"Configuration is invalid: {string.Join(", ", validationErrors)}", nameof(configuration));
+            }
+
+            _logger = logger ?? Microsoft.Extensions.Logging.Abstractions.NullLogger<ProphyApiClient>.Instance;
+            _disposeHttpClient = disposeHttpClient;
+            OrganizationCode = configuration.OrganizationCode!;
+
+            // Configure HttpClient from configuration
+            ConfigureHttpClientFromConfiguration(httpClient, configuration);
+
+            // Set base URL
+            BaseUrl = httpClient.BaseAddress ?? new Uri(configuration.BaseUrl!);
+            if (httpClient.BaseAddress == null)
+            {
+                httpClient.BaseAddress = BaseUrl;
+            }
+
+            // Create authenticator
+            var authenticatorLogger = Microsoft.Extensions.Logging.Abstractions.NullLogger<ApiKeyAuthenticator>.Instance;
+            _authenticator = new ApiKeyAuthenticator(configuration.ApiKey!, authenticatorLogger);
+
+            // Create HTTP client wrapper
+            var httpClientLogger = Microsoft.Extensions.Logging.Abstractions.NullLogger<HttpClientWrapper>.Instance;
+            _httpClient = new HttpClientWrapper(httpClient, httpClientLogger);
+
+            // Initialize API modules
+            _manuscripts = new Lazy<IManuscriptModule>(() => CreateManuscriptModule());
+            _customFields = new Lazy<ICustomFieldModule>(() => CreateCustomFieldModule());
+
+            _logger.LogInformation("ProphyApiClient initialized for organization: {OrganizationCode}, Base URL: {BaseUrl}", 
+                OrganizationCode, BaseUrl);
         }
 
         /// <summary>
@@ -58,6 +178,7 @@ namespace Prophy.ApiClient
 
             _logger = logger ?? Microsoft.Extensions.Logging.Abstractions.NullLogger<ProphyApiClient>.Instance;
             _disposeHttpClient = disposeHttpClient;
+            OrganizationCode = organizationCode;
 
             // Set base URL
             BaseUrl = httpClient.BaseAddress ?? new Uri("https://www.prophy.ai/api/");
@@ -68,11 +189,15 @@ namespace Prophy.ApiClient
 
             // Create authenticator
             var authenticatorLogger = Microsoft.Extensions.Logging.Abstractions.NullLogger<ApiKeyAuthenticator>.Instance;
-            _authenticator = new ApiKeyAuthenticator(apiKey, organizationCode, authenticatorLogger);
+            _authenticator = new ApiKeyAuthenticator(apiKey, authenticatorLogger);
 
             // Create HTTP client wrapper
             var httpClientLogger = Microsoft.Extensions.Logging.Abstractions.NullLogger<HttpClientWrapper>.Instance;
             _httpClient = new HttpClientWrapper(httpClient, httpClientLogger);
+
+            // Initialize API modules
+            _manuscripts = new Lazy<IManuscriptModule>(() => CreateManuscriptModule());
+            _customFields = new Lazy<ICustomFieldModule>(() => CreateCustomFieldModule());
 
             _logger.LogInformation("ProphyApiClient initialized for organization: {OrganizationCode}, Base URL: {BaseUrl}", 
                 organizationCode, BaseUrl);
@@ -102,6 +227,37 @@ namespace Prophy.ApiClient
         }
 
         /// <summary>
+        /// Creates an HttpClient configured from the provided configuration.
+        /// </summary>
+        /// <param name="configuration">The configuration to use for HttpClient setup.</param>
+        /// <returns>A configured HttpClient instance.</returns>
+        private static HttpClient CreateHttpClientFromConfiguration(IProphyApiClientConfiguration configuration)
+        {
+            var httpClient = new HttpClient();
+            ConfigureHttpClientFromConfiguration(httpClient, configuration);
+            return httpClient;
+        }
+
+        /// <summary>
+        /// Configures an existing HttpClient from the provided configuration.
+        /// </summary>
+        /// <param name="httpClient">The HttpClient to configure.</param>
+        /// <param name="configuration">The configuration to apply.</param>
+        private static void ConfigureHttpClientFromConfiguration(HttpClient httpClient, IProphyApiClientConfiguration configuration)
+        {
+            // Set base address
+            httpClient.BaseAddress = new Uri(configuration.BaseUrl!);
+            
+            // Set timeout
+            httpClient.Timeout = TimeSpan.FromSeconds(configuration.TimeoutSeconds);
+            
+            // Set default headers
+            httpClient.DefaultRequestHeaders.Clear();
+            httpClient.DefaultRequestHeaders.Add("User-Agent", configuration.UserAgent ?? ProphyApiClientConfiguration.DefaultUserAgent);
+            httpClient.DefaultRequestHeaders.Add("Accept", "application/json");
+        }
+
+        /// <summary>
         /// Gets the HTTP client wrapper for making raw HTTP requests.
         /// This is primarily intended for advanced scenarios and testing.
         /// </summary>
@@ -121,6 +277,34 @@ namespace Prophy.ApiClient
         {
             ThrowIfDisposed();
             return _authenticator;
+        }
+
+        /// <summary>
+        /// Creates a new instance of the manuscript module.
+        /// </summary>
+        /// <returns>A configured manuscript module instance.</returns>
+        private IManuscriptModule CreateManuscriptModule()
+        {
+            var formDataBuilderLogger = Microsoft.Extensions.Logging.Abstractions.NullLogger<MultipartFormDataBuilder>.Instance;
+            var formDataBuilder = new MultipartFormDataBuilder(formDataBuilderLogger);
+            
+            var jsonSerializer = SerializationFactory.CreateJsonSerializer();
+            
+            var manuscriptLogger = Microsoft.Extensions.Logging.Abstractions.NullLogger<ManuscriptModule>.Instance;
+            
+            return new ManuscriptModule(_httpClient, _authenticator, formDataBuilder, jsonSerializer, manuscriptLogger);
+        }
+
+        /// <summary>
+        /// Creates a new instance of the custom field module.
+        /// </summary>
+        /// <returns>A configured custom field module instance.</returns>
+        private ICustomFieldModule CreateCustomFieldModule()
+        {
+            var jsonSerializer = SerializationFactory.CreateJsonSerializer();
+            var customFieldLogger = Microsoft.Extensions.Logging.Abstractions.NullLogger<CustomFieldModule>.Instance;
+            
+            return new CustomFieldModule(_httpClient, _authenticator, jsonSerializer, customFieldLogger);
         }
 
         private void ThrowIfDisposed()

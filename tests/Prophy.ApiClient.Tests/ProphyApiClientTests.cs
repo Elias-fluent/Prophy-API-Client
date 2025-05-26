@@ -122,7 +122,8 @@ namespace Prophy.ApiClient.Tests
             Assert.NotNull(authenticator);
             Assert.IsAssignableFrom<IApiKeyAuthenticator>(authenticator);
             Assert.Equal(TestApiKey, authenticator.ApiKey);
-            Assert.Equal(TestOrgCode, authenticator.OrganizationCode);
+            // OrganizationCode is now managed by the client, not the authenticator
+            Assert.Equal(TestOrgCode, client.OrganizationCode);
         }
 
         [Fact]

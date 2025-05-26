@@ -16,11 +16,22 @@ namespace Prophy.ApiClient.Authentication
         /// <summary>
         /// Gets the API key used for authentication.
         /// </summary>
-        string ApiKey { get; }
+        string? ApiKey { get; }
 
         /// <summary>
         /// Gets the organization code associated with the API key.
         /// </summary>
-        string OrganizationCode { get; }
+        string? OrganizationCode { get; }
+
+        /// <summary>
+        /// Sets the API key for authentication.
+        /// </summary>
+        /// <param name="apiKey">The API key to use for authentication.</param>
+        void SetApiKey(string apiKey);
+
+        /// <summary>
+        /// Clears the current API key configuration.
+        /// </summary>
+        void ClearApiKey();
     }
 } 

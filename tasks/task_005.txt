@@ -1,6 +1,6 @@
 # Task ID: 5
 # Title: Implement Manuscript Upload API
-# Status: pending
+# Status: done
 # Dependencies: 2, 3, 4
 # Priority: high
 # Description: Develop functionality for uploading manuscripts with file handling and metadata.

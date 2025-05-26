@@ -22,11 +22,11 @@ namespace Prophy.ApiClient.Tests.Authentication
         public void Constructor_WithValidParameters_SetsProperties()
         {
             // Act
-            var authenticator = new ApiKeyAuthenticator(TestApiKey, TestOrgCode, _mockLogger.Object);
+            var authenticator = new ApiKeyAuthenticator(TestApiKey, _mockLogger.Object);
 
             // Assert
             Assert.Equal(TestApiKey, authenticator.ApiKey);
-            Assert.Equal(TestOrgCode, authenticator.OrganizationCode);
+            Assert.Null(authenticator.OrganizationCode); // OrganizationCode is no longer set in constructor
         }
 
         [Theory]
@@ -37,22 +37,9 @@ namespace Prophy.ApiClient.Tests.Authentication
         {
             // Act & Assert
             var exception = Assert.Throws<ArgumentException>(() => 
-                new ApiKeyAuthenticator(invalidApiKey!, TestOrgCode, _mockLogger.Object));
+                new ApiKeyAuthenticator(invalidApiKey!, _mockLogger.Object));
             
             Assert.Equal("API key cannot be null or empty. (Parameter 'apiKey')", exception.Message);
-        }
-
-        [Theory]
-        [InlineData(null)]
-        [InlineData("")]
-        [InlineData("   ")]
-        public void Constructor_WithInvalidOrganizationCode_ThrowsArgumentException(string? invalidOrgCode)
-        {
-            // Act & Assert
-            var exception = Assert.Throws<ArgumentException>(() => 
-                new ApiKeyAuthenticator(TestApiKey, invalidOrgCode!, _mockLogger.Object));
-            
-            Assert.Equal("Organization code cannot be null or empty. (Parameter 'organizationCode')", exception.Message);
         }
 
         [Fact]
@@ -60,7 +47,7 @@ namespace Prophy.ApiClient.Tests.Authentication
         {
             // Act & Assert
             var exception = Assert.Throws<ArgumentNullException>(() => 
-                new ApiKeyAuthenticator(TestApiKey, TestOrgCode, null!));
+                new ApiKeyAuthenticator(TestApiKey, null!));
             
             Assert.Equal("logger", exception.ParamName);
         }
@@ -69,7 +56,7 @@ namespace Prophy.ApiClient.Tests.Authentication
         public void AuthenticateRequest_WithValidRequest_AddsApiKeyHeader()
         {
             // Arrange
-            var authenticator = new ApiKeyAuthenticator(TestApiKey, TestOrgCode, _mockLogger.Object);
+            var authenticator = new ApiKeyAuthenticator(TestApiKey, _mockLogger.Object);
             var request = new HttpRequestMessage(HttpMethod.Get, "https://api.example.com/test");
 
             // Act
@@ -86,7 +73,7 @@ namespace Prophy.ApiClient.Tests.Authentication
         public void AuthenticateRequest_WithNullRequest_ThrowsArgumentNullException()
         {
             // Arrange
-            var authenticator = new ApiKeyAuthenticator(TestApiKey, TestOrgCode, _mockLogger.Object);
+            var authenticator = new ApiKeyAuthenticator(TestApiKey, _mockLogger.Object);
 
             // Act & Assert
             var exception = Assert.Throws<ArgumentNullException>(() => 
@@ -99,7 +86,7 @@ namespace Prophy.ApiClient.Tests.Authentication
         public void AuthenticateRequest_CalledMultipleTimes_AddsHeaderEachTime()
         {
             // Arrange
-            var authenticator = new ApiKeyAuthenticator(TestApiKey, TestOrgCode, _mockLogger.Object);
+            var authenticator = new ApiKeyAuthenticator(TestApiKey, _mockLogger.Object);
             var request1 = new HttpRequestMessage(HttpMethod.Get, "https://api.example.com/test1");
             var request2 = new HttpRequestMessage(HttpMethod.Post, "https://api.example.com/test2");
 

@@ -1,0 +1,11 @@
+# Task ID: 5
+# Title: Implement Manuscript Upload API
+# Status: pending
+# Dependencies: 2, 3, 4
+# Priority: high
+# Description: Develop functionality for uploading manuscripts with file handling and metadata.
+# Details:
+Create a ManuscriptModule class with an UploadAsync method. Implement file streaming for efficient large file uploads. Handle multipart form data creation for manuscript metadata and file content. Use System.IO.Pipelines (7.0.0) for efficient file streaming. Implement progress reporting using IProgress<T>.
+
+# Test Strategy:
+Integration test with a mock server to verify correct file and metadata transmission. Unit test progress reporting and cancellation token support.

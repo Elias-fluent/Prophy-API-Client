@@ -1,0 +1,11 @@
+# Task ID: 22
+# Title: Develop Integration Tests
+# Status: pending
+# Dependencies: 21
+# Priority: high
+# Description: Create a suite of integration tests to verify correct interaction with the Prophy API.
+# Details:
+Implement integration tests using xUnit (2.4.2). Use WireMock.Net (1.5.13) to mock the Prophy API for testing. Create realistic test scenarios covering all major API interactions. Implement test data generators for various entities.
+
+# Test Strategy:
+Run integration tests against both mocked API and (occasionally) the real Prophy API sandbox environment. Verify correct handling of various API responses and error conditions.

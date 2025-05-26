@@ -1,0 +1,11 @@
+# Task ID: 23
+# Title: Create Comprehensive Documentation
+# Status: pending
+# Dependencies: 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20
+# Priority: high
+# Description: Develop detailed API documentation, usage guides, and examples.
+# Details:
+Use DocFX (2.59.4) to generate API documentation from XML comments. Create a user guide with getting started instructions and best practices. Develop a set of cookbook-style recipes for common scenarios. Use Mermaid.js for creating clear architecture and flow diagrams.
+
+# Test Strategy:
+Review documentation for clarity and completeness. Verify all public APIs are properly documented. Test documentation examples to ensure they work as described.

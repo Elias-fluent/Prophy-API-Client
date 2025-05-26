@@ -1,0 +1,11 @@
+# Task ID: 13
+# Title: Implement Dependency Injection Support
+# Status: pending
+# Dependencies: 2, 6, 11, 12
+# Priority: medium
+# Description: Develop extensions for easy integration with dependency injection containers.
+# Details:
+Create a separate project Prophy.ApiClient.Extensions.DependencyInjection. Implement extension methods for IServiceCollection. Develop factory methods for creating configured client instances. Use Microsoft.Extensions.DependencyInjection (7.0.0) for DI container support.
+
+# Test Strategy:
+Unit test DI container registration and resolution. Verify correct lifetime management of client instances. Test integration with ASP.NET Core dependency injection.

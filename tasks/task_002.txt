@@ -1,0 +1,11 @@
+# Task ID: 2
+# Title: Implement Core HTTP Infrastructure
+# Status: done
+# Dependencies: 1
+# Priority: high
+# Description: Create the foundational HTTP client infrastructure with support for authentication and basic error handling.
+# Details:
+Implement a wrapper around HttpClient using HttpClientFactory for better performance and lifecycle management. Create an ApiKeyAuthenticator class to handle X-ApiKey header authentication. Implement a basic IHttpClientWrapper interface and its concrete implementation. Use the latest version of Microsoft.Extensions.Http (7.0.0 as of now) for HttpClientFactory integration. Implement retry policies using Polly (7.2.3) for transient failure handling.
+
+# Test Strategy:
+Unit test the HTTP client wrapper with mock HttpMessageHandler. Test authentication header injection. Verify retry policy behavior with simulated failures.

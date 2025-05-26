@@ -1,0 +1,11 @@
+# Task ID: 20
+# Title: Develop Rate Limiting and Circuit Breaker
+# Status: pending
+# Dependencies: 2, 11
+# Priority: medium
+# Description: Implement advanced resilience patterns for production use.
+# Details:
+Implement client-side rate limiting to respect API quotas. Develop circuit breaker pattern for handling API outages. Use Polly (7.2.3) for implementing resilience patterns. Create a ResilienceModule for managing these features.
+
+# Test Strategy:
+Unit test rate limiting behavior under high load. Verify circuit breaker trips and recovers correctly. Test integration with logging and monitoring systems.

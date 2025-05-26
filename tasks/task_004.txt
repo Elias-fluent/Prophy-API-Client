@@ -1,0 +1,11 @@
+# Task ID: 4
+# Title: Define Core Data Models
+# Status: pending
+# Dependencies: 3
+# Priority: high
+# Description: Create strongly-typed models for manuscripts, authors, and referee candidates.
+# Details:
+Define classes for Manuscript, Author, RefereeCandidate, and related entities. Use nullable reference types for optional properties. Implement data annotations for validation. Create separate request and response models for API operations. Use the latest C# language features (C# 10.0) for concise and expressive model definitions.
+
+# Test Strategy:
+Unit test model instantiation, property access, and validation attributes. Verify JSON serialization/deserialization of models.

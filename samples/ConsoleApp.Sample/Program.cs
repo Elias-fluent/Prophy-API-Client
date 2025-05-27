@@ -97,6 +97,12 @@ namespace ConsoleApp.Sample
                 await IpWhitelistDemo.RunAsync(logger);
                 Console.WriteLine();
 
+                // Demonstrate security policy enforcement
+                Console.WriteLine("Running security policy enforcement demonstration...");
+                Console.WriteLine();
+                await SecurityPolicyDemo.RunAsync(logger);
+                Console.WriteLine();
+
                 // Test real API with correct format
                 Console.WriteLine("=".PadRight(50, '='));
                 Console.WriteLine();

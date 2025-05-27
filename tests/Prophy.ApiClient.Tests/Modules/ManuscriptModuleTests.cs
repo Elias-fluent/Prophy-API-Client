@@ -170,7 +170,7 @@ namespace Prophy.ApiClient.Tests.Modules
             _mockHttpClient.Setup(x => x.SendAsync(It.IsAny<HttpRequestMessage>(), It.IsAny<CancellationToken>()))
                 .ReturnsAsync(httpResponse);
             _mockJsonSerializer.Setup(x => x.Deserialize<ManuscriptUploadResponse>(It.IsAny<string>()))
-                .Returns(new ManuscriptUploadResponse { Success = true });
+                .Returns(new ManuscriptUploadResponse { ManuscriptId = "test-id" });
 
             // Act
             await _manuscriptModule.UploadAsync(request, progress);
@@ -363,7 +363,7 @@ namespace Prophy.ApiClient.Tests.Modules
             _mockHttpClient.Setup(x => x.SendAsync(It.IsAny<HttpRequestMessage>(), It.IsAny<CancellationToken>()))
                 .ReturnsAsync(httpResponse);
             _mockJsonSerializer.Setup(x => x.Deserialize<ManuscriptUploadResponse>(It.IsAny<string>()))
-                .Returns(new ManuscriptUploadResponse { Success = true });
+                .Returns(new ManuscriptUploadResponse { ManuscriptId = "test-id" });
 
             // Act
             await _manuscriptModule.UploadAsync(request);
@@ -389,7 +389,7 @@ namespace Prophy.ApiClient.Tests.Modules
             _mockHttpClient.Setup(x => x.SendAsync(It.IsAny<HttpRequestMessage>(), It.IsAny<CancellationToken>()))
                 .ReturnsAsync(httpResponse);
             _mockJsonSerializer.Setup(x => x.Deserialize<ManuscriptUploadResponse>(It.IsAny<string>()))
-                .Returns(new ManuscriptUploadResponse { Success = true });
+                .Returns(new ManuscriptUploadResponse { ManuscriptId = "test-id" });
 
             // Act
             await _manuscriptModule.UploadAsync(request);
@@ -424,7 +424,7 @@ namespace Prophy.ApiClient.Tests.Modules
             _mockHttpClient.Setup(x => x.SendAsync(It.IsAny<HttpRequestMessage>(), It.IsAny<CancellationToken>()))
                 .ReturnsAsync(httpResponse);
             _mockJsonSerializer.Setup(x => x.Deserialize<ManuscriptUploadResponse>(It.IsAny<string>()))
-                .Returns(new ManuscriptUploadResponse { Success = true });
+                .Returns(new ManuscriptUploadResponse { ManuscriptId = "test-id" });
             _mockJsonSerializer.Setup(x => x.Serialize(It.IsAny<object>())).Returns("serialized");
 
             // Act

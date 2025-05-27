@@ -118,7 +118,7 @@ namespace Prophy.ApiClient.Tests.Modules
             var request = CreateValidUploadRequest();
             var expectedResponse = new ManuscriptUploadResponse
             {
-                Success = true,
+                ManuscriptId = "test-id",
                 Message = "Upload successful",
                 Manuscript = new Manuscript { Id = "123", Title = "Test Manuscript" }
             };
@@ -277,7 +277,7 @@ namespace Prophy.ApiClient.Tests.Modules
             var manuscriptId = "123";
             var expectedResponse = new ManuscriptUploadResponse
             {
-                Success = true,
+                ManuscriptId = manuscriptId,
                 ProcessingStatus = "completed",
                 Manuscript = new Manuscript { Id = manuscriptId, Title = "Test Manuscript" }
             };

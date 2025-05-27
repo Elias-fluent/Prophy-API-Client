@@ -53,6 +53,16 @@ namespace Prophy.ApiClient.Authentication
         }
 
         /// <inheritdoc />
+        public void SetOrganizationCode(string organizationCode)
+        {
+            if (string.IsNullOrWhiteSpace(organizationCode))
+                throw new ArgumentException("Organization code cannot be null or empty.", nameof(organizationCode));
+
+            OrganizationCode = organizationCode;
+            _logger.LogDebug("Organization code set successfully");
+        }
+
+        /// <inheritdoc />
         public void ClearApiKey()
         {
             ApiKey = null;

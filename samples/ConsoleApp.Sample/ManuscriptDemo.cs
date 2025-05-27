@@ -1,11 +1,14 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Text;
+using System.Text.Json;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
 using Prophy.ApiClient;
 using Prophy.ApiClient.Models.Requests;
+using Prophy.ApiClient.Models.Responses;
 using Prophy.ApiClient.Modules;
 
 namespace ConsoleApp.Sample
@@ -50,26 +53,11 @@ namespace ConsoleApp.Sample
 
                 try
                 {
-                    // Note: This will fail with authentication error since we're using sample credentials
-                    // but it demonstrates the API usage
+                    // Upload with real credentials and data
                     var response = await client.Manuscripts.UploadAsync(manuscriptRequest, progress);
 
                     Console.WriteLine("✅ Upload completed successfully!");
-                    Console.WriteLine($"   Manuscript ID: {response.Manuscript?.Id ?? "N/A"}");
-                    Console.WriteLine($"   Status: {response.ProcessingStatus ?? "N/A"}");
-                    Console.WriteLine($"   Success: {response.Success}");
-                    Console.WriteLine($"   Message: {response.Message ?? "N/A"}");
-                    Console.WriteLine($"   Request ID: {response.RequestId ?? "N/A"}");
-                    
-                    if (response.Errors?.Count > 0)
-                    {
-                        Console.WriteLine($"   Errors: {string.Join(", ", response.Errors)}");
-                    }
-                    
-                    if (response.Warnings?.Count > 0)
-                    {
-                        Console.WriteLine($"   Warnings: {string.Join(", ", response.Warnings)}");
-                    }
+                    DisplayUploadResponse(response);
                 }
                 catch (Exception ex)
                 {
@@ -113,87 +101,135 @@ namespace ConsoleApp.Sample
         }
 
         /// <summary>
-        /// Creates a sample manuscript upload request for demonstration purposes.
+        /// Creates a sample manuscript upload request for demonstration purposes using a real PDF file.
         /// </summary>
         /// <returns>A configured manuscript upload request.</returns>
         private static ManuscriptUploadRequest CreateSampleManuscriptRequest()
         {
-            // Create sample PDF content (just text for demo)
-            var sampleContent = @"
-Sample Manuscript Content
-========================
+            // Load the real PDF file  
+            var pdfPath = Path.Combine("..", "..", "samples", "test_manuscript.pdf");
+            byte[] fileContent;
+            string fileName;
+            
+            try
+            {
+                fileContent = System.IO.File.ReadAllBytes(pdfPath);
+                fileName = Path.GetFileName(pdfPath);
+                Console.WriteLine($"✅ Loaded real PDF manuscript: {pdfPath} ({fileContent.Length:N0} bytes)");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"⚠️  Could not load PDF file '{pdfPath}': {ex.Message}");
+                Console.WriteLine("   Using fallback text content for demo...");
+                
+                // Fallback to text content if PDF not found
+                var fallbackContent = "Sample manuscript content for demo purposes.";
+                fileContent = Encoding.UTF8.GetBytes(fallbackContent);
+                fileName = "sample-manuscript.txt";
+            }
 
-Abstract
---------
-This is a sample manuscript for demonstrating the Prophy API Client library.
-It contains sample content to show how file uploads work with the API.
-
-Introduction
------------
-The Prophy API enables researchers and publishers to find qualified peer reviewers
-for academic manuscripts using advanced AI and machine learning techniques.
-
-Methodology
-----------
-This sample demonstrates the integration capabilities of the Prophy API Client
-library for .NET applications.
-
-Results
--------
-The API client successfully handles file uploads, metadata, and progress reporting.
-
-Conclusion
-----------
-The Prophy API Client provides a robust foundation for integrating peer review
-capabilities into academic publishing workflows.
-
-References
-----------
-[1] Prophy Scientific Knowledge Management Platform
-[2] .NET Standard 2.0 Compatibility Guidelines
-";
-
-            var fileContent = Encoding.UTF8.GetBytes(sampleContent);
+            // Use the format that matches the working example
+            var authorNames = new List<string> { "Michael Turkington", "Test Author" };
+            var authorEmails = new List<string> { "Michael.turkington@fluenttechnology.com", "test@example.com" };
 
             return new ManuscriptUploadRequest
             {
-                Title = "Sample Manuscript: Prophy API Integration Demo",
-                Abstract = "This sample manuscript demonstrates the capabilities of the Prophy API Client library for .NET applications, showcasing file upload, metadata handling, and progress reporting features.",
-                Authors = new List<string>
-                {
-                    "Dr. Jane Smith",
-                    "Prof. John Doe",
-                    "Dr. Alice Johnson"
-                },
+                Title = "Deep immunophenotyping of pericardial macrophage in patients with coronary artery disease: the role of small extracellular vesicles.",
+                Abstract = "Coronary artery disease (CAD) is the main cause of ischemic heart disease (IHD) driven by circulating high cholesterol levels. Different subtypes of macrophages contribute to regulating the balance between atherosclerotic plaque growth/regression and plaque rupture/stabilisation. Recent studies provide evidence for the role of extracellular vesicles (EVs) in modulating macrophage phenotype. Our lab previously showed that the human pericardial fluid (PF) contains small EVs (sEVs) able to modulate cardiovascular response via microRNA shuttling. Our new pilot data show that PF-sEVs collected from CAD patients during coronary artery-by-pass graft (CABG) surgery are taken up by macrophages, promoting their switch toward a pro-inflammatory phenotype associated with expressional changes in the CD36 and SR-B1 scavenger receptors (controls: non-CAD cardiac surgery patients, operated for mitral valve repair). This project will characterise the macrophage populations residing in the PF of CAD vs non-CAD patients using the cutting-edge technique of Cellular Indexing of Transcriptomes and Epitopes sequencing at the single-cell level (sc-CITE-seq). Further cell and molecular approaches will be used to investigate the mechanisms by which PF-sEVs modulate the macrophage phenotype and the functional consequences on cholesterol metabolism.",
+                Journal = "Deep immunophenotyping of pericardial macrophage in patients with coronary artery disease: the role of small extracellular vesicles.",
+                OriginId = $"test-{DateTime.Now.Ticks}",
+                AuthorsCount = authorNames.Count,
+                AuthorNames = authorNames,
+                AuthorEmails = authorEmails,
+                SourceFileName = fileName,
                 Keywords = new List<string>
                 {
-                    "API Integration",
-                    "Peer Review",
-                    "Academic Publishing",
-                    ".NET Development",
-                    "Scientific Knowledge Management"
+                    "Coronary artery disease",
+                    "Macrophages",
+                    "Extracellular vesicles",
+                    "Pericardial fluid"
                 },
-                Subject = "Computer Science",
+                Subject = "Medical Research",
                 Type = "research-article",
                 Language = "en",
-                Folder = "demo-submissions",
-                OriginId = "demo-manuscript-001",
-                FileName = "sample-manuscript.txt",
+                FileName = fileName,
                 FileContent = fileContent,
-                MimeType = "text/plain",
+                MimeType = fileName.EndsWith(".pdf") ? "application/pdf" : "text/plain",
                 CustomFields = new Dictionary<string, object>
                 {
-                    { "funding_source", "Demo Grant Foundation" },
-                    { "research_area", "API Development" },
-                    { "submission_type", "demo" }
+                    { "test_run", "api-client-demo" },
+                    { "upload_source", "dotnet-client-library" }
                 },
                 Metadata = new Dictionary<string, object>
                 {
-                    { "demo_version", "1.0" },
-                    { "created_by", "Prophy API Client Demo" },
-                    { "timestamp", DateTime.UtcNow.ToString("O") }
+                    { "client_version", "1.0.0" },
+                    { "test_timestamp", DateTime.UtcNow.ToString("O") },
+                    { "real_file_test", true }
                 }
             };
+        }
+
+        /// <summary>
+        /// Displays the upload response in a formatted way matching the working example.
+        /// </summary>
+        /// <param name="response">The manuscript upload response.</param>
+        private static void DisplayUploadResponse(ManuscriptUploadResponse response)
+        {
+            Console.WriteLine("\nRaw Response Data:");
+            var jsonOptions = new JsonSerializerOptions { WriteIndented = true };
+            Console.WriteLine(JsonSerializer.Serialize(response, jsonOptions));
+
+            Console.WriteLine("\nUpload Response:");
+            Console.WriteLine($"Manuscript ID: {response.ManuscriptId}");
+            Console.WriteLine($"Origin ID: {response.OriginId}");
+            
+            if (response.DebugInfo != null)
+            {
+                Console.WriteLine("\nDebug Information:");
+                if (response.DebugInfo.AuthorsInfo != null)
+                {
+                    Console.WriteLine($"Authors Info:");
+                    Console.WriteLine($"- Authors Count: {response.DebugInfo.AuthorsInfo.AuthorsCount}");
+                    Console.WriteLine($"- Emails Count: {response.DebugInfo.AuthorsInfo.EmailsCount}");
+                    Console.WriteLine($"- ORCIDs Count: {response.DebugInfo.AuthorsInfo.OrcidsCount}");
+                }
+                Console.WriteLine($"Extracted Concepts: {response.DebugInfo.ExtractedConcepts}");
+                Console.WriteLine($"Parsed References: {response.DebugInfo.ParsedReferences}");
+                Console.WriteLine($"Parsed Text Length: {response.DebugInfo.ParsedTextLen}");
+                Console.WriteLine($"Source File: {response.DebugInfo.SourceFile}");
+            }
+
+            if (response.AuthorsGroupsSettings != null)
+            {
+                Console.WriteLine("\nAuthors Groups Settings:");
+                Console.WriteLine($"Effect: {response.AuthorsGroupsSettings.Effect}");
+                if (response.AuthorsGroupsSettings.AuthorsGroups.Count > 0)
+                {
+                    Console.WriteLine("Authors Groups:");
+                    foreach (var group in response.AuthorsGroupsSettings.AuthorsGroups)
+                    {
+                        Console.WriteLine($"- {group.Name} (ID: {group.Id}, Label: {group.Label})");
+                    }
+                }
+            }
+
+            Console.WriteLine($"\nCandidates Count: {response.Candidates.Count}");
+            if (response.Candidates.Count > 0)
+            {
+                Console.WriteLine("\nCandidates:");
+                foreach (var candidate in response.Candidates)
+                {
+                    Console.WriteLine($"- {candidate.Name} ({candidate.Email})");
+                    Console.WriteLine($"  Score: {candidate.Score}");
+                    Console.WriteLine($"  H-Index: {candidate.HIndex}");
+                    Console.WriteLine($"  Articles: {candidate.ArticlesCount}");
+                    Console.WriteLine($"  Citations: {candidate.CitationsCount}");
+                    if (!string.IsNullOrEmpty(candidate.Affiliation))
+                    {
+                        Console.WriteLine($"  Affiliation: {candidate.Affiliation}");
+                    }
+                }
+            }
         }
     }
 } 

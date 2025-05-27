@@ -99,6 +99,7 @@ namespace Prophy.ApiClient
             // Create authenticator
             var authenticatorLogger = Microsoft.Extensions.Logging.Abstractions.NullLogger<ApiKeyAuthenticator>.Instance;
             _authenticator = new ApiKeyAuthenticator(configuration.ApiKey!, authenticatorLogger);
+            _authenticator.SetOrganizationCode(configuration.OrganizationCode!);
 
             // Create HTTP client wrapper
             var httpClientLogger = Microsoft.Extensions.Logging.Abstractions.NullLogger<HttpClientWrapper>.Instance;
@@ -154,6 +155,7 @@ namespace Prophy.ApiClient
             // Create authenticator
             var authenticatorLogger = Microsoft.Extensions.Logging.Abstractions.NullLogger<ApiKeyAuthenticator>.Instance;
             _authenticator = new ApiKeyAuthenticator(configuration.ApiKey!, authenticatorLogger);
+            _authenticator.SetOrganizationCode(configuration.OrganizationCode!);
 
             // Create HTTP client wrapper
             var httpClientLogger = Microsoft.Extensions.Logging.Abstractions.NullLogger<HttpClientWrapper>.Instance;
@@ -198,6 +200,7 @@ namespace Prophy.ApiClient
             // Create authenticator
             var authenticatorLogger = Microsoft.Extensions.Logging.Abstractions.NullLogger<ApiKeyAuthenticator>.Instance;
             _authenticator = new ApiKeyAuthenticator(apiKey, authenticatorLogger);
+            _authenticator.SetOrganizationCode(organizationCode);
 
             // Create HTTP client wrapper
             var httpClientLogger = Microsoft.Extensions.Logging.Abstractions.NullLogger<HttpClientWrapper>.Instance;

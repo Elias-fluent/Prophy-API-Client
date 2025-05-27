@@ -94,8 +94,7 @@ namespace Prophy.ApiClient.Modules
                     Content = formData
                 };
 
-                // Add authentication
-                _authenticator.AuthenticateRequest(httpRequest);
+                // Note: Authentication is handled via form fields (api_key, organization) not headers
 
                 _logger.LogDebug("Sending manuscript upload request to {Endpoint}", httpRequest.RequestUri);
 
@@ -129,7 +128,7 @@ namespace Prophy.ApiClient.Modules
                     Message = "Upload completed successfully"
                 });
 
-                return uploadResponse ?? new ManuscriptUploadResponse { Success = false, Message = "Invalid response format" };
+                return uploadResponse ?? new ManuscriptUploadResponse { Message = "Invalid response format" };
             }
             catch (ValidationException)
             {
@@ -175,7 +174,7 @@ namespace Prophy.ApiClient.Modules
                 _logger.LogDebug("Retrieved status for manuscript {ManuscriptId}: {Status}", 
                     manuscriptId, statusResponse?.ProcessingStatus ?? "Unknown");
 
-                return statusResponse ?? new ManuscriptUploadResponse { Success = false, Message = "Invalid response format" };
+                return statusResponse ?? new ManuscriptUploadResponse { Message = "Invalid response format" };
             }
             catch (TaskCanceledException ex) when (ex.CancellationToken.IsCancellationRequested)
             {
@@ -231,45 +230,62 @@ namespace Prophy.ApiClient.Modules
         {
             _formDataBuilder.Clear();
 
-            // Add metadata fields
+            // Add authentication fields as form data (matching working example and API docs)
+            _formDataBuilder.AddField("api_key", _authenticator.ApiKey ?? throw new InvalidOperationException("API key is required"));
+            _formDataBuilder.AddField("organization", _authenticator.OrganizationCode ?? throw new InvalidOperationException("Organization code is required"));
+
+            // Add required fields using the exact field names from API documentation
+            _formDataBuilder.AddField("folder", request.Journal ?? request.Title); // API docs use "folder"
+            _formDataBuilder.AddField("origin_id", request.OriginId ?? $"manuscript-{DateTime.Now.Ticks}");
             _formDataBuilder.AddField("title", request.Title);
+            _formDataBuilder.AddField("abstract", request.Abstract ?? "");
+            _formDataBuilder.AddField("authors_count", request.AuthorsCount.ToString());
 
-            if (!string.IsNullOrEmpty(request.Abstract))
-                _formDataBuilder.AddField("abstract", request.Abstract);
+            // Add author information using the exact format from working example
+            if (request.AuthorNames?.Any() == true)
+            {
+                for (int i = 0; i < request.AuthorNames.Count; i++)
+                {
+                    _formDataBuilder.AddField($"author{i + 1}_name", request.AuthorNames[i]);
+                }
+            }
 
-            if (request.Authors?.Any() == true)
-                _formDataBuilder.AddField("authors", _jsonSerializer.Serialize(request.Authors));
+            if (request.AuthorEmails?.Any() == true)
+            {
+                for (int i = 0; i < request.AuthorEmails.Count; i++)
+                {
+                    _formDataBuilder.AddField($"author{i + 1}_email", request.AuthorEmails[i]);
+                }
+            }
 
-            if (request.Keywords?.Any() == true)
-                _formDataBuilder.AddField("keywords", _jsonSerializer.Serialize(request.Keywords));
+            // Add optional filtering parameters if provided
+            if (request.MinHIndex.HasValue)
+                _formDataBuilder.AddField("min_h_index", request.MinHIndex.Value.ToString());
+            
+            if (request.MaxHIndex.HasValue)
+                _formDataBuilder.AddField("max_h_index", request.MaxHIndex.Value.ToString());
+            
+            if (request.MinAcademicAge.HasValue)
+                _formDataBuilder.AddField("min_academic_age", request.MinAcademicAge.Value.ToString());
+            
+            if (request.MaxAcademicAge.HasValue)
+                _formDataBuilder.AddField("max_academic_age", request.MaxAcademicAge.Value.ToString());
+            
+            if (request.MinArticlesCount.HasValue)
+                _formDataBuilder.AddField("min_articles_count", request.MinArticlesCount.Value.ToString());
+            
+            if (request.MaxArticlesCount.HasValue)
+                _formDataBuilder.AddField("max_articles_count", request.MaxArticlesCount.Value.ToString());
+            
+            if (request.ExcludeCandidates)
+                _formDataBuilder.AddField("exclude_candidates", "true");
 
-            if (!string.IsNullOrEmpty(request.Subject))
-                _formDataBuilder.AddField("subject", request.Subject);
-
-            if (!string.IsNullOrEmpty(request.Type))
-                _formDataBuilder.AddField("type", request.Type);
-
-            if (!string.IsNullOrEmpty(request.Folder))
-                _formDataBuilder.AddField("folder", request.Folder);
-
-            if (!string.IsNullOrEmpty(request.OriginId))
-                _formDataBuilder.AddField("originId", request.OriginId);
-
-            if (!string.IsNullOrEmpty(request.Language))
-                _formDataBuilder.AddField("language", request.Language);
-
-            if (request.CustomFields?.Any() == true)
-                _formDataBuilder.AddField("customFields", _jsonSerializer.Serialize(request.CustomFields));
-
-            if (request.Metadata?.Any() == true)
-                _formDataBuilder.AddField("metadata", _jsonSerializer.Serialize(request.Metadata));
-
-            // Add file content
+            // Add file content - use "source_file" as the field name (matching API docs)
             var mimeType = request.MimeType ?? GetMimeTypeFromFileName(request.FileName!);
-            _formDataBuilder.AddFile("file", request.FileName!, request.FileContent!, mimeType);
+            _formDataBuilder.AddFile("source_file", request.FileName!, request.FileContent!, mimeType);
 
-            _logger.LogDebug("Built multipart form data with file: {FileName} ({Size} bytes)", 
-                request.FileName, request.FileContent!.Length);
+            _logger.LogDebug("Built multipart form data with file: {FileName} ({Size} bytes), Authors: {AuthorsCount}", 
+                request.FileName, request.FileContent!.Length, request.AuthorsCount);
 
             return _formDataBuilder.Build();
         }

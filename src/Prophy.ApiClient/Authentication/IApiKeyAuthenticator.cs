@@ -30,6 +30,12 @@ namespace Prophy.ApiClient.Authentication
         void SetApiKey(string apiKey);
 
         /// <summary>
+        /// Sets the organization code for authentication.
+        /// </summary>
+        /// <param name="organizationCode">The organization code to use for authentication.</param>
+        void SetOrganizationCode(string organizationCode);
+
+        /// <summary>
         /// Clears the current API key configuration.
         /// </summary>
         void ClearApiKey();

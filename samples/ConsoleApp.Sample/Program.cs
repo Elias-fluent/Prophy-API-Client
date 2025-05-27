@@ -21,7 +21,7 @@ namespace ConsoleApp.Sample
 
             try
             {
-                // Initialize the Prophy API client with sample credentials
+                // Initialize the Prophy API client with real credentials
                 // Note: In a real application, these would come from configuration
                 var apiKey = "VVfPN8VqhhYgImx3jLqb_4aZBLhSM9XdMq1Pm0rj";
                 var organizationCode = "Flexigrant";
@@ -83,6 +83,24 @@ namespace ConsoleApp.Sample
                 Console.WriteLine();
                 var webhookDemo = new WebhookDemo(client);
                 await webhookDemo.RunAsync();
+                Console.WriteLine();
+
+                // Demonstrate security functionality
+                Console.WriteLine("Running security features demonstration...");
+                Console.WriteLine();
+                await SecurityDemo.RunSecurityDemoAsync();
+                Console.WriteLine();
+
+                // Demonstrate IP whitelisting functionality
+                Console.WriteLine("Running IP whitelisting demonstration...");
+                Console.WriteLine();
+                await IpWhitelistDemo.RunAsync(logger);
+                Console.WriteLine();
+
+                // Test real API with correct format
+                Console.WriteLine("=".PadRight(50, '='));
+                Console.WriteLine();
+                await TestRealApi.RunAsync();
                 Console.WriteLine();
 
                 Console.WriteLine("Next steps:");

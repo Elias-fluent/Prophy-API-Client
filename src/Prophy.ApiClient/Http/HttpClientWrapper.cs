@@ -7,17 +7,18 @@ using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
 using Polly;
 using Prophy.ApiClient.Diagnostics;
+using Prophy.ApiClient.Modules;
 
 namespace Prophy.ApiClient.Http
 {
     /// <summary>
-    /// Concrete implementation of IHttpClientWrapper that provides HTTP operations with retry policies and logging.
+    /// Concrete implementation of IHttpClientWrapper that provides HTTP operations with resilience patterns and logging.
     /// </summary>
     public class HttpClientWrapper : IHttpClientWrapper
     {
         private readonly HttpClient _httpClient;
         private readonly ILogger<HttpClientWrapper> _logger;
-        private readonly ResiliencePipeline<HttpResponseMessage> _retryPipeline;
+        private readonly IResilienceModule? _resilienceModule;
 
         /// <summary>
         /// Initializes a new instance of the HttpClientWrapper class.
@@ -28,27 +29,62 @@ namespace Prophy.ApiClient.Http
         {
             _httpClient = httpClient ?? throw new ArgumentNullException(nameof(httpClient));
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+            _resilienceModule = null; // No resilience module - direct HTTP calls
+        }
+
+        /// <summary>
+        /// Initializes a new instance of the HttpClientWrapper class with resilience support.
+        /// </summary>
+        /// <param name="httpClient">The HttpClient instance to use for HTTP operations.</param>
+        /// <param name="logger">The logger instance for logging HTTP operations.</param>
+        /// <param name="resilienceModule">The resilience module for rate limiting, circuit breaker, and retry policies.</param>
+        public HttpClientWrapper(HttpClient httpClient, ILogger<HttpClientWrapper> logger, IResilienceModule resilienceModule)
+        {
+            _httpClient = httpClient ?? throw new ArgumentNullException(nameof(httpClient));
+            _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+            _resilienceModule = resilienceModule ?? throw new ArgumentNullException(nameof(resilienceModule));
+        }
+
+        /// <summary>
+        /// Executes an HTTP operation with resilience patterns if available, otherwise executes directly.
+        /// </summary>
+        /// <param name="method">The HTTP method for logging and endpoint identification.</param>
+        /// <param name="requestUri">The request URI for endpoint identification.</param>
+        /// <param name="operation">The HTTP operation to execute.</param>
+        /// <param name="cancellationToken">The cancellation token.</param>
+        /// <returns>The HTTP response message.</returns>
+        private async Task<HttpResponseMessage> ExecuteWithResilienceAsync(string method, string requestUri, Func<CancellationToken, Task<HttpResponseMessage>> operation, CancellationToken cancellationToken)
+        {
+            if (_resilienceModule != null)
+            {
+                // Use endpoint-specific pipeline based on the request URI
+                var endpointName = GetEndpointName(method, requestUri);
+                return await _resilienceModule.ExecuteAsync(endpointName, operation, cancellationToken);
+            }
+            else
+            {
+                // Execute directly without resilience patterns
+                return await operation(cancellationToken);
+            }
+        }
+
+        /// <summary>
+        /// Gets a normalized endpoint name for resilience pipeline identification.
+        /// </summary>
+        /// <param name="method">The HTTP method.</param>
+        /// <param name="requestUri">The request URI.</param>
+        /// <returns>A normalized endpoint name.</returns>
+        private static string GetEndpointName(string method, string requestUri)
+        {
+            // Extract the path from the URI and normalize it for endpoint identification
+            var uri = requestUri.StartsWith("http") ? new Uri(requestUri) : new Uri($"https://example.com{requestUri}");
+            var path = uri.AbsolutePath.Trim('/');
             
-            // Configure retry pipeline with exponential backoff
-            _retryPipeline = new ResiliencePipelineBuilder<HttpResponseMessage>()
-                .AddRetry(new Polly.Retry.RetryStrategyOptions<HttpResponseMessage>
-                {
-                    ShouldHandle = new PredicateBuilder<HttpResponseMessage>()
-                        .Handle<HttpRequestException>()
-                        .Handle<TaskCanceledException>()
-                        .HandleResult(response => IsTransientHttpFailure(response)),
-                    Delay = TimeSpan.FromSeconds(1),
-                    MaxRetryAttempts = 3,
-                    BackoffType = Polly.DelayBackoffType.Exponential,
-                    UseJitter = true,
-                    OnRetry = args =>
-                    {
-                        _logger.LogWarning("Retrying HTTP request. Attempt: {Attempt}, Delay: {Delay}ms", 
-                            args.AttemptNumber + 1, args.RetryDelay.TotalMilliseconds);
-                        return default;
-                    }
-                })
-                .Build();
+            // Replace dynamic segments with placeholders for consistent endpoint naming
+            // e.g., /api/external/proposal/123 -> /api/external/proposal/{id}
+            path = System.Text.RegularExpressions.Regex.Replace(path, @"\d+", "{id}");
+            
+            return $"{method.ToUpperInvariant()}:{path}";
         }
 
         /// <inheritdoc />
@@ -56,7 +92,7 @@ namespace Prophy.ApiClient.Http
         {
             _logger.LogDebug("Sending GET request to: {RequestUri}", requestUri);
             
-            return await _retryPipeline.ExecuteAsync(async (ct) =>
+            return await ExecuteWithResilienceAsync("GET", requestUri, async (ct) =>
             {
                 var response = await _httpClient.GetAsync(requestUri, ct);
                 LogResponse(response, "GET", requestUri);
@@ -69,7 +105,7 @@ namespace Prophy.ApiClient.Http
         {
             _logger.LogDebug("Sending GET request to: {RequestUri}", requestUri);
             
-            return await _retryPipeline.ExecuteAsync(async (ct) =>
+            return await ExecuteWithResilienceAsync("GET", requestUri?.ToString() ?? "", async (ct) =>
             {
                 var response = await _httpClient.GetAsync(requestUri, ct);
                 LogResponse(response, "GET", requestUri?.ToString());
@@ -82,7 +118,7 @@ namespace Prophy.ApiClient.Http
         {
             _logger.LogDebug("Sending POST request to: {RequestUri}", requestUri);
             
-            return await _retryPipeline.ExecuteAsync(async (ct) =>
+            return await ExecuteWithResilienceAsync("POST", requestUri, async (ct) =>
             {
                 var response = await _httpClient.PostAsync(requestUri, content, ct);
                 LogResponse(response, "POST", requestUri);
@@ -95,7 +131,7 @@ namespace Prophy.ApiClient.Http
         {
             _logger.LogDebug("Sending POST request to: {RequestUri}", requestUri);
             
-            return await _retryPipeline.ExecuteAsync(async (ct) =>
+            return await ExecuteWithResilienceAsync("POST", requestUri?.ToString() ?? "", async (ct) =>
             {
                 var response = await _httpClient.PostAsync(requestUri, content, ct);
                 LogResponse(response, "POST", requestUri?.ToString());
@@ -108,7 +144,7 @@ namespace Prophy.ApiClient.Http
         {
             _logger.LogDebug("Sending PUT request to: {RequestUri}", requestUri);
             
-            return await _retryPipeline.ExecuteAsync(async (ct) =>
+            return await ExecuteWithResilienceAsync("PUT", requestUri, async (ct) =>
             {
                 var response = await _httpClient.PutAsync(requestUri, content, ct);
                 LogResponse(response, "PUT", requestUri);
@@ -121,7 +157,7 @@ namespace Prophy.ApiClient.Http
         {
             _logger.LogDebug("Sending PUT request to: {RequestUri}", requestUri);
             
-            return await _retryPipeline.ExecuteAsync(async (ct) =>
+            return await ExecuteWithResilienceAsync("PUT", requestUri?.ToString() ?? "", async (ct) =>
             {
                 var response = await _httpClient.PutAsync(requestUri, content, ct);
                 LogResponse(response, "PUT", requestUri?.ToString());
@@ -134,7 +170,7 @@ namespace Prophy.ApiClient.Http
         {
             _logger.LogDebug("Sending DELETE request to: {RequestUri}", requestUri);
             
-            return await _retryPipeline.ExecuteAsync(async (ct) =>
+            return await ExecuteWithResilienceAsync("DELETE", requestUri, async (ct) =>
             {
                 var response = await _httpClient.DeleteAsync(requestUri, ct);
                 LogResponse(response, "DELETE", requestUri);
@@ -147,7 +183,7 @@ namespace Prophy.ApiClient.Http
         {
             _logger.LogDebug("Sending DELETE request to: {RequestUri}", requestUri);
             
-            return await _retryPipeline.ExecuteAsync(async (ct) =>
+            return await ExecuteWithResilienceAsync("DELETE", requestUri?.ToString() ?? "", async (ct) =>
             {
                 var response = await _httpClient.DeleteAsync(requestUri, ct);
                 LogResponse(response, "DELETE", requestUri?.ToString());
@@ -160,7 +196,7 @@ namespace Prophy.ApiClient.Http
         {
             _logger.LogDebug("Sending {Method} request to: {RequestUri}", request.Method, request.RequestUri);
             
-            return await _retryPipeline.ExecuteAsync(async (ct) =>
+            return await ExecuteWithResilienceAsync(request.Method.ToString(), request.RequestUri?.ToString() ?? "", async (ct) =>
             {
                 var response = await _httpClient.SendAsync(request, ct);
                 LogResponse(response, request.Method.ToString(), request.RequestUri?.ToString());
@@ -188,17 +224,6 @@ namespace Prophy.ApiClient.Http
             DiagnosticEvents.Metrics.IncrementCounter($"http.requests.{method.ToLowerInvariant()}.{(response.IsSuccessStatusCode ? "success" : "failure")}");
         }
 
-        private static bool IsTransientHttpFailure(HttpResponseMessage response)
-        {
-            var statusCode = (int)response.StatusCode;
-            
-            // Consider 5xx server errors as transient
-            if (statusCode >= 500)
-                return true;
-                
-            // Consider specific 4xx errors as transient
-            return response.StatusCode == HttpStatusCode.RequestTimeout ||
-                   statusCode == 429; // Too Many Requests
-        }
+
     }
 } 

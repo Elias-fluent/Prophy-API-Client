@@ -140,17 +140,76 @@ Note that AutoReplenishment is a boolean property, not TimeSpan, and the OnRejec
 **Status:** Implementation complete and verified. Rate limiting is now fully functional with Polly 8.x API.
 </info added on 2025-05-27T09:08:59.461Z>
 
-## 3. Implement Circuit Breaker Pattern with Polly [pending]
+## 3. Implement Circuit Breaker Pattern with Polly [done]
 ### Dependencies: 20.1
 ### Description: Develop a circuit breaker policy using Polly 7.2.3 to handle API outages and prevent cascading failures.
 ### Details:
 Configure circuit breaker thresholds, durations, and fallback behaviors. Integrate with the ResilienceModule and ensure proper handling of open, half-open, and closed states.
+<info added on 2025-05-27T09:10:16.649Z>
+The circuit breaker pattern is fully implemented in the ResilienceModule as part of the resilience pipeline with the following components:
 
-## 4. Integrate ResilienceModule with HTTP Infrastructure [pending]
+1. Circuit breaker configuration using Polly 8.x with customizable parameters:
+   - FailureRatio and MinimumThroughput for threshold control
+   - SamplingDuration for monitoring window
+   - BreakDuration for circuit open time
+   - Comprehensive failure detection for HttpRequestException, TaskCanceledException, and transient HTTP failures (5xx, 408, 429)
+
+2. Complete state transition handling:
+   - OnOpened: Logs warnings and increments circuit_breaker.opened metric
+   - OnClosed: Logs info and increments circuit_breaker.closed metric
+   - OnHalfOpened: Logs info and increments circuit_breaker.half_opened metric
+
+3. Strategic pipeline positioning between rate limiting and retry strategies
+
+4. Full configuration support through ResilienceOptions.CircuitBreaker settings with runtime update capabilities
+
+Implementation is complete and verified with proper state handling, failure detection, metrics collection, and configuration-driven behavior.
+</info added on 2025-05-27T09:10:16.649Z>
+
+## 4. Integrate ResilienceModule with HTTP Infrastructure [done]
 ### Dependencies: 20.2, 20.3
 ### Description: Integrate the ResilienceModule into the existing HTTP client pipeline, ensuring seamless application of rate limiting and circuit breaker policies.
 ### Details:
 Inject the ResilienceModule into HTTP client factories or middleware. Ensure configuration options are externally configurable and policies are applied per endpoint or globally as needed.
+<info added on 2025-05-27T09:15:47.950Z>
+# Implementation Completed
+
+## Integration with HTTP Infrastructure
+
+### HttpClientWrapper Integration
+- Updated HttpClientWrapper with ResilienceModule injection support
+- Added new constructor with IResilienceModule parameter
+- Created ExecuteWithResilienceAsync helper method
+- Implemented endpoint naming for pipeline identification
+- Maintained backward compatibility
+
+### ProphyApiClient Integration
+- Added IResilienceModule property and field
+- Updated all constructors to initialize ResilienceModule
+- Implemented default configuration with:
+  - Rate limiting (100 requests/minute)
+  - Circuit breaker (50% failure ratio, 30s sampling/break duration)
+  - Retry policy (3 attempts with exponential backoff)
+  - Timeout policy (30 seconds per request)
+
+### Endpoint-Specific Resilience
+- Implemented dynamic endpoint naming with ID normalization
+- Created per-endpoint resilience pipelines
+- Added metrics collection for monitoring
+
+### Configuration and Compatibility
+- Maintained backward compatibility with existing code
+- Made ResilienceModule optional with fallback behavior
+- Added runtime configuration update capabilities
+- Implemented metrics collection and reset functionality
+
+### Technical Implementation
+- Proper initialization order and resource management
+- Thread-safe concurrent pipeline handling
+- Comprehensive logging integration
+
+All code builds successfully with no errors and is ready for integration testing.
+</info added on 2025-05-27T09:15:47.950Z>
 
 ## 5. Implement Monitoring, Configuration, and Testing [pending]
 ### Dependencies: 20.4

@@ -28,6 +28,7 @@ namespace Prophy.ApiClient
         private readonly Lazy<IWebhookModule> _webhooks;
         private readonly Lazy<IJournalRecommendationModule> _journals;
         private readonly Lazy<IAuthorGroupModule> _authorGroups;
+        private readonly Lazy<IResilienceModule> _resilience;
 
         /// <summary>
         /// Gets the base URL for the Prophy API.
@@ -63,6 +64,11 @@ namespace Prophy.ApiClient
         /// Gets the author groups module for author group management operations.
         /// </summary>
         public IAuthorGroupModule AuthorGroups => _authorGroups.Value;
+
+        /// <summary>
+        /// Gets the resilience module for rate limiting, circuit breaker, and retry policies.
+        /// </summary>
+        public IResilienceModule Resilience => _resilience.Value;
 
         /// <summary>
         /// Initializes a new instance of the ProphyApiClient class with the specified API key and organization code.
@@ -113,9 +119,12 @@ namespace Prophy.ApiClient
             _authenticator = new ApiKeyAuthenticator(configuration.ApiKey!, authenticatorLogger);
             _authenticator.SetOrganizationCode(configuration.OrganizationCode!);
 
-            // Create HTTP client wrapper
+            // Initialize resilience module first
+            _resilience = new Lazy<IResilienceModule>(() => CreateResilienceModule());
+
+            // Create HTTP client wrapper with resilience support
             var httpClientLogger = Microsoft.Extensions.Logging.Abstractions.NullLogger<HttpClientWrapper>.Instance;
-            _httpClient = new HttpClientWrapper(httpClient, httpClientLogger);
+            _httpClient = new HttpClientWrapper(httpClient, httpClientLogger, _resilience.Value);
 
             // Initialize API modules
             _manuscripts = new Lazy<IManuscriptModule>(() => CreateManuscriptModule());
@@ -171,9 +180,12 @@ namespace Prophy.ApiClient
             _authenticator = new ApiKeyAuthenticator(configuration.ApiKey!, authenticatorLogger);
             _authenticator.SetOrganizationCode(configuration.OrganizationCode!);
 
-            // Create HTTP client wrapper
+            // Initialize resilience module first
+            _resilience = new Lazy<IResilienceModule>(() => CreateResilienceModule());
+
+            // Create HTTP client wrapper with resilience support
             var httpClientLogger = Microsoft.Extensions.Logging.Abstractions.NullLogger<HttpClientWrapper>.Instance;
-            _httpClient = new HttpClientWrapper(httpClient, httpClientLogger);
+            _httpClient = new HttpClientWrapper(httpClient, httpClientLogger, _resilience.Value);
 
             // Initialize API modules
             _manuscripts = new Lazy<IManuscriptModule>(() => CreateManuscriptModule());
@@ -218,9 +230,12 @@ namespace Prophy.ApiClient
             _authenticator = new ApiKeyAuthenticator(apiKey, authenticatorLogger);
             _authenticator.SetOrganizationCode(organizationCode);
 
-            // Create HTTP client wrapper
+            // Initialize resilience module first
+            _resilience = new Lazy<IResilienceModule>(() => CreateResilienceModule());
+
+            // Create HTTP client wrapper with resilience support
             var httpClientLogger = Microsoft.Extensions.Logging.Abstractions.NullLogger<HttpClientWrapper>.Instance;
-            _httpClient = new HttpClientWrapper(httpClient, httpClientLogger);
+            _httpClient = new HttpClientWrapper(httpClient, httpClientLogger, _resilience.Value);
 
             // Initialize API modules
             _manuscripts = new Lazy<IManuscriptModule>(() => CreateManuscriptModule());
@@ -374,6 +389,50 @@ namespace Prophy.ApiClient
             var authorGroupLogger = Microsoft.Extensions.Logging.Abstractions.NullLogger<AuthorGroupModule>.Instance;
             
             return new AuthorGroupModule(_httpClient, _authenticator, jsonSerializer, authorGroupLogger);
+        }
+
+        /// <summary>
+        /// Creates a new instance of the resilience module.
+        /// </summary>
+        /// <returns>A configured resilience module instance.</returns>
+        private IResilienceModule CreateResilienceModule()
+        {
+            var resilienceOptions = new ResilienceOptions
+            {
+                Enabled = true,
+                RateLimiting = new RateLimitingOptions
+                {
+                    Enabled = true,
+                    PermitLimit = 100,
+                    Window = TimeSpan.FromMinutes(1),
+                    SegmentsPerWindow = 4,
+                    QueueLimit = 10
+                },
+                CircuitBreaker = new CircuitBreakerOptions
+                {
+                    Enabled = true,
+                    FailureRatio = 0.5,
+                    MinimumThroughput = 10,
+                    SamplingDuration = TimeSpan.FromSeconds(30),
+                    BreakDuration = TimeSpan.FromSeconds(30)
+                },
+                Retry = new RetryOptions
+                {
+                    Enabled = true,
+                    MaxRetryAttempts = 3,
+                    Delay = TimeSpan.FromSeconds(1),
+                    BackoffType = DelayBackoffType.Exponential,
+                    UseJitter = true
+                },
+                Timeout = new TimeoutOptions
+                {
+                    Enabled = true,
+                    Timeout = TimeSpan.FromSeconds(30)
+                }
+            };
+
+            var resilienceLogger = Microsoft.Extensions.Logging.Abstractions.NullLogger<ResilienceModule>.Instance;
+            return new ResilienceModule(resilienceOptions, resilienceLogger);
         }
 
         private void ThrowIfDisposed()

@@ -103,6 +103,12 @@ namespace ConsoleApp.Sample
                 await SecurityPolicyDemo.RunAsync(logger);
                 Console.WriteLine();
 
+                // Demonstrate OAuth integration and JWT validation
+                Console.WriteLine("Running OAuth integration and JWT validation demonstration...");
+                Console.WriteLine();
+                await OAuthJwtDemo.RunAsync(logger);
+                Console.WriteLine();
+
                 // Test real API with correct format
                 Console.WriteLine("=".PadRight(50, '='));
                 Console.WriteLine();

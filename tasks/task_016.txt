@@ -1,6 +1,6 @@
 # Task ID: 16
 # Title: Develop Multi-Tenancy Support
-# Status: pending
+# Status: in-progress
 # Dependencies: 2, 6, 12
 # Priority: medium
 # Description: Implement multi-tenant architecture with organization isolation.
@@ -9,3 +9,104 @@ Create an OrganizationContext class for managing tenant-specific data. Implement
 
 # Test Strategy:
 Unit test tenant isolation in multi-threaded scenarios. Verify correct tenant resolution from various sources. Test integration with authentication and configuration systems.
+
+# Subtasks:
+## 1. Design OrganizationContext Class [done]
+### Dependencies: None
+### Description: Create an OrganizationContext class to encapsulate and manage tenant-specific data and context throughout the application lifecycle.
+### Details:
+Define the structure and responsibilities of the OrganizationContext class, ensuring it can store and retrieve tenant-specific information such as organization codes, configuration, and user context.
+<info added on 2025-05-27T10:17:30.156Z>
+Successfully implemented the OrganizationContext class and IOrganizationContextProvider interface:
+
+✅ **OrganizationContext Class Created:**
+- Immutable design using System.Collections.Immutable
+- Stores organization code, name, API key, base URL, custom properties, and user claims
+- Provides fluent API methods (WithApiKey, WithBaseUrl, WithProperties, WithUserClaims)
+- Implements proper equality comparison based on organization code
+- Thread-safe and suitable for multi-tenant scenarios
+
+✅ **IOrganizationContextProvider Interface:**
+- Defines contract for managing organization context
+- Supports getting/setting current context
+- Provides async resolution of contexts by organization code
+- Includes context clearing functionality
+
+✅ **OrganizationContextProvider Implementation:**
+- Uses AsyncLocal<T> for context propagation across async operations
+- Implements caching with ConcurrentDictionary for performance
+- Thread-safe implementation suitable for multi-tenant scenarios
+- Comprehensive logging for debugging and monitoring
+- Additional utility methods for context management (RegisterContext, UnregisterContext, ClearCache)
+
+✅ **Project Configuration:**
+- Added System.Collections.Immutable package reference
+- All code compiles successfully with no errors
+- Ready for integration with existing authentication and configuration systems
+
+The foundation for multi-tenancy support is now in place. Next step is to implement tenant resolution middleware.
+</info added on 2025-05-27T10:17:30.156Z>
+
+## 2. Implement Tenant Resolution Middleware [done]
+### Dependencies: 16.1
+### Description: Develop middleware to automatically resolve and set the current tenant context for each incoming request.
+### Details:
+The middleware should extract tenant identifiers (e.g., from headers, tokens, or subdomains), resolve the corresponding organization, and populate OrganizationContext for downstream use.
+<info added on 2025-05-27T10:19:32.058Z>
+Successfully implemented tenant resolution middleware components:
+
+✅ **ITenantResolver Interface:**
+- Defines contract for resolving tenant information from various sources
+- Supports resolution from HTTP requests, headers, JWT tokens, and URLs
+- Provides configurable resolution order strategy
+
+✅ **TenantResolver Implementation:**
+- Multi-strategy tenant resolution (Headers → Token → URL)
+- Header-based resolution with common organization header names (X-Organization-Code, X-Org-Code, etc.)
+- JWT token parsing with support for common claim names (org, organization, org_code, tenant, tenant_id)
+- URL-based resolution from subdomains and path segments
+- Comprehensive error handling and logging
+- Graceful fallback between strategies
+
+✅ **TenantResolutionService:**
+- Coordinates tenant resolution with context management
+- Integrates ITenantResolver with IOrganizationContextProvider
+- Provides ResolveAndSetContextAsync for automatic context setting
+- Includes EnsureContextAsync with fallback organization support
+- Context lifecycle management (get, set, clear)
+
+✅ **Key Features Implemented:**
+- Multiple resolution strategies with priority ordering
+- Robust JWT token parsing with Bearer token support
+- Subdomain extraction (e.g., acme.prophy.ai → acme)
+- Path segment extraction (e.g., /api/v1/orgs/acme/... → acme)
+- Comprehensive logging for debugging and monitoring
+- Thread-safe implementation using AsyncLocal context propagation
+- Fallback mechanisms for resilient operation
+
+✅ **Integration Ready:**
+- All components compile successfully
+- Ready for integration with HTTP handlers and authentication systems
+- Designed to work seamlessly with existing API client architecture
+
+The tenant resolution middleware is now complete and ready for the next phase of multi-tenancy implementation.
+</info added on 2025-05-27T10:19:32.058Z>
+
+## 3. Integrate AsyncLocal<T> for Tenant Context Propagation [pending]
+### Dependencies: 16.1, 16.2
+### Description: Utilize AsyncLocal<T> to maintain and propagate tenant context across asynchronous operations within the application.
+### Details:
+Ensure that OrganizationContext is accessible throughout the request lifecycle, including in async/await flows, background tasks, and event handlers.
+
+## 4. Implement Tenant Isolation for API Keys and Configurations [pending]
+### Dependencies: 16.1, 16.2, 16.3
+### Description: Develop strategies to isolate API keys and configuration settings per tenant, preventing cross-tenant data leakage.
+### Details:
+Refactor API key management and configuration loading to ensure all sensitive data is scoped to the current tenant, leveraging OrganizationContext.
+
+## 5. Integrate Multi-Tenancy with Existing Authentication and Modules [pending]
+### Dependencies: 16.1, 16.2, 16.3, 16.4
+### Description: Update authentication, configuration, and module systems to be fully aware of and compatible with the new multi-tenant architecture.
+### Details:
+Refactor authentication flows, configuration providers, and modular components to utilize OrganizationContext and enforce tenant boundaries throughout the system.
+

@@ -322,8 +322,68 @@
         6,
         12
       ],
-      "status": "pending",
-      "subtasks": []
+      "status": "in-progress",
+      "subtasks": [
+        {
+          "id": 1,
+          "title": "Design OrganizationContext Class",
+          "description": "Create an OrganizationContext class to encapsulate and manage tenant-specific data and context throughout the application lifecycle.",
+          "dependencies": [],
+          "details": "Define the structure and responsibilities of the OrganizationContext class, ensuring it can store and retrieve tenant-specific information such as organization codes, configuration, and user context.\n<info added on 2025-05-27T10:17:30.156Z>\nSuccessfully implemented the OrganizationContext class and IOrganizationContextProvider interface:\n\n✅ **OrganizationContext Class Created:**\n- Immutable design using System.Collections.Immutable\n- Stores organization code, name, API key, base URL, custom properties, and user claims\n- Provides fluent API methods (WithApiKey, WithBaseUrl, WithProperties, WithUserClaims)\n- Implements proper equality comparison based on organization code\n- Thread-safe and suitable for multi-tenant scenarios\n\n✅ **IOrganizationContextProvider Interface:**\n- Defines contract for managing organization context\n- Supports getting/setting current context\n- Provides async resolution of contexts by organization code\n- Includes context clearing functionality\n\n✅ **OrganizationContextProvider Implementation:**\n- Uses AsyncLocal<T> for context propagation across async operations\n- Implements caching with ConcurrentDictionary for performance\n- Thread-safe implementation suitable for multi-tenant scenarios\n- Comprehensive logging for debugging and monitoring\n- Additional utility methods for context management (RegisterContext, UnregisterContext, ClearCache)\n\n✅ **Project Configuration:**\n- Added System.Collections.Immutable package reference\n- All code compiles successfully with no errors\n- Ready for integration with existing authentication and configuration systems\n\nThe foundation for multi-tenancy support is now in place. Next step is to implement tenant resolution middleware.\n</info added on 2025-05-27T10:17:30.156Z>",
+          "status": "done",
+          "testStrategy": "Write unit tests to verify correct storage and retrieval of tenant data within OrganizationContext."
+        },
+        {
+          "id": 2,
+          "title": "Implement Tenant Resolution Middleware",
+          "description": "Develop middleware to automatically resolve and set the current tenant context for each incoming request.",
+          "dependencies": [
+            1
+          ],
+          "details": "The middleware should extract tenant identifiers (e.g., from headers, tokens, or subdomains), resolve the corresponding organization, and populate OrganizationContext for downstream use.\n<info added on 2025-05-27T10:19:32.058Z>\nSuccessfully implemented tenant resolution middleware components:\n\n✅ **ITenantResolver Interface:**\n- Defines contract for resolving tenant information from various sources\n- Supports resolution from HTTP requests, headers, JWT tokens, and URLs\n- Provides configurable resolution order strategy\n\n✅ **TenantResolver Implementation:**\n- Multi-strategy tenant resolution (Headers → Token → URL)\n- Header-based resolution with common organization header names (X-Organization-Code, X-Org-Code, etc.)\n- JWT token parsing with support for common claim names (org, organization, org_code, tenant, tenant_id)\n- URL-based resolution from subdomains and path segments\n- Comprehensive error handling and logging\n- Graceful fallback between strategies\n\n✅ **TenantResolutionService:**\n- Coordinates tenant resolution with context management\n- Integrates ITenantResolver with IOrganizationContextProvider\n- Provides ResolveAndSetContextAsync for automatic context setting\n- Includes EnsureContextAsync with fallback organization support\n- Context lifecycle management (get, set, clear)\n\n✅ **Key Features Implemented:**\n- Multiple resolution strategies with priority ordering\n- Robust JWT token parsing with Bearer token support\n- Subdomain extraction (e.g., acme.prophy.ai → acme)\n- Path segment extraction (e.g., /api/v1/orgs/acme/... → acme)\n- Comprehensive logging for debugging and monitoring\n- Thread-safe implementation using AsyncLocal context propagation\n- Fallback mechanisms for resilient operation\n\n✅ **Integration Ready:**\n- All components compile successfully\n- Ready for integration with HTTP handlers and authentication systems\n- Designed to work seamlessly with existing API client architecture\n\nThe tenant resolution middleware is now complete and ready for the next phase of multi-tenancy implementation.\n</info added on 2025-05-27T10:19:32.058Z>",
+          "status": "done",
+          "testStrategy": "Create integration tests to ensure middleware correctly identifies and sets tenant context for various request scenarios."
+        },
+        {
+          "id": 3,
+          "title": "Integrate AsyncLocal<T> for Tenant Context Propagation",
+          "description": "Utilize AsyncLocal<T> to maintain and propagate tenant context across asynchronous operations within the application.",
+          "dependencies": [
+            1,
+            2
+          ],
+          "details": "Ensure that OrganizationContext is accessible throughout the request lifecycle, including in async/await flows, background tasks, and event handlers.",
+          "status": "pending",
+          "testStrategy": "Test context consistency across asynchronous boundaries and concurrent requests."
+        },
+        {
+          "id": 4,
+          "title": "Implement Tenant Isolation for API Keys and Configurations",
+          "description": "Develop strategies to isolate API keys and configuration settings per tenant, preventing cross-tenant data leakage.",
+          "dependencies": [
+            1,
+            2,
+            3
+          ],
+          "details": "Refactor API key management and configuration loading to ensure all sensitive data is scoped to the current tenant, leveraging OrganizationContext.",
+          "status": "pending",
+          "testStrategy": "Write tests to verify that API keys and configurations are only accessible within the correct tenant context."
+        },
+        {
+          "id": 5,
+          "title": "Integrate Multi-Tenancy with Existing Authentication and Modules",
+          "description": "Update authentication, configuration, and module systems to be fully aware of and compatible with the new multi-tenant architecture.",
+          "dependencies": [
+            1,
+            2,
+            3,
+            4
+          ],
+          "details": "Refactor authentication flows, configuration providers, and modular components to utilize OrganizationContext and enforce tenant boundaries throughout the system.",
+          "status": "pending",
+          "testStrategy": "Perform end-to-end tests to confirm tenant isolation, correct authentication, and module behavior for multiple concurrent tenants."
+        }
+      ]
     },
     {
       "id": 17,

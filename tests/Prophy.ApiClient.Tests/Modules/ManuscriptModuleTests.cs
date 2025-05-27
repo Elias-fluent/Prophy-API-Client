@@ -149,10 +149,11 @@ namespace Prophy.ApiClient.Tests.Modules
             Assert.Equal("Upload successful", result.Message);
             Assert.Equal("123", result.Manuscript?.Id);
 
-            _mockAuthenticator.Verify(x => x.AuthenticateRequest(It.IsAny<HttpRequestMessage>()), Times.Once);
             _mockFormDataBuilder.Verify(x => x.Clear(), Times.Once);
+            _mockFormDataBuilder.Verify(x => x.AddField("api_key", "test-api-key"), Times.Once);
+            _mockFormDataBuilder.Verify(x => x.AddField("organization", "test-org"), Times.Once);
             _mockFormDataBuilder.Verify(x => x.AddField("title", request.Title), Times.Once);
-            _mockFormDataBuilder.Verify(x => x.AddFile("file", request.FileName!, request.FileContent!, It.IsAny<string>()), Times.Once);
+            _mockFormDataBuilder.Verify(x => x.AddFile("source_file", request.FileName!, request.FileContent!, It.IsAny<string>()), Times.Once);
         }
 
         [Fact]
@@ -373,7 +374,7 @@ namespace Prophy.ApiClient.Tests.Modules
             await _manuscriptModule.UploadAsync(request);
 
             // Assert
-            _mockFormDataBuilder.Verify(x => x.AddFile("file", request.FileName, request.FileContent!, expectedMimeType), Times.Once);
+            _mockFormDataBuilder.Verify(x => x.AddFile("source_file", request.FileName, request.FileContent!, expectedMimeType), Times.Once);
         }
 
         [Fact]
@@ -399,7 +400,7 @@ namespace Prophy.ApiClient.Tests.Modules
             await _manuscriptModule.UploadAsync(request);
 
             // Assert
-            _mockFormDataBuilder.Verify(x => x.AddFile("file", request.FileName!, request.FileContent!, "custom/type"), Times.Once);
+            _mockFormDataBuilder.Verify(x => x.AddFile("source_file", request.FileName!, request.FileContent!, "custom/type"), Times.Once);
         }
 
         [Fact]
@@ -408,7 +409,8 @@ namespace Prophy.ApiClient.Tests.Modules
             // Arrange
             var request = CreateValidUploadRequest();
             request.Abstract = "Test abstract";
-            request.Authors = new List<string> { "Test Author" };
+            request.AuthorNames = new List<string> { "Test Author" };
+            request.AuthorsCount = 1;
             request.Keywords = new List<string> { "keyword1", "keyword2" };
             request.Subject = "Test subject";
             request.Type = "research";
@@ -436,15 +438,10 @@ namespace Prophy.ApiClient.Tests.Modules
 
             // Assert
             _mockFormDataBuilder.Verify(x => x.AddField("abstract", request.Abstract), Times.Once);
-            _mockFormDataBuilder.Verify(x => x.AddField("authors", "serialized"), Times.Once);
-            _mockFormDataBuilder.Verify(x => x.AddField("keywords", "serialized"), Times.Once);
-            _mockFormDataBuilder.Verify(x => x.AddField("subject", request.Subject), Times.Once);
-            _mockFormDataBuilder.Verify(x => x.AddField("type", request.Type), Times.Once);
+            _mockFormDataBuilder.Verify(x => x.AddField("authors_count", "1"), Times.Once);
+            _mockFormDataBuilder.Verify(x => x.AddField("author1_name", "Test Author"), Times.Once);
             _mockFormDataBuilder.Verify(x => x.AddField("folder", request.Folder), Times.Once);
-            _mockFormDataBuilder.Verify(x => x.AddField("originId", request.OriginId), Times.Once);
-            _mockFormDataBuilder.Verify(x => x.AddField("language", request.Language), Times.Once);
-            _mockFormDataBuilder.Verify(x => x.AddField("customFields", "serialized"), Times.Once);
-            _mockFormDataBuilder.Verify(x => x.AddField("metadata", "serialized"), Times.Once);
+            _mockFormDataBuilder.Verify(x => x.AddField("origin_id", request.OriginId), Times.Once);
         }
 
         private static ManuscriptUploadRequest CreateValidUploadRequest()

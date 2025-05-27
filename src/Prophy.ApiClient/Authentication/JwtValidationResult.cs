@@ -71,7 +71,8 @@ namespace Prophy.ApiClient.Authentication
         /// <returns>The subject claim value, or null if not present or validation failed.</returns>
         public string? GetSubject()
         {
-            return Principal?.FindFirst(JwtRegisteredClaimNames.Sub)?.Value;
+            return Principal?.FindFirst(JwtRegisteredClaimNames.Sub)?.Value ??
+                   Principal?.FindFirst(ClaimTypes.NameIdentifier)?.Value;
         }
 
         /// <summary>
@@ -80,7 +81,8 @@ namespace Prophy.ApiClient.Authentication
         /// <returns>The email claim value, or null if not present or validation failed.</returns>
         public string? GetEmail()
         {
-            return Principal?.FindFirst(JwtRegisteredClaimNames.Email)?.Value;
+            return Principal?.FindFirst(JwtRegisteredClaimNames.Email)?.Value ??
+                   Principal?.FindFirst(ClaimTypes.Email)?.Value;
         }
 
         /// <summary>

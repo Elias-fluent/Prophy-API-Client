@@ -36,6 +36,10 @@ namespace Prophy.ApiClient.Tests.Modules
             _mockJsonSerializer = new Mock<IJsonSerializer>();
             _mockLogger = new Mock<ILogger<ManuscriptModule>>();
 
+            // Setup authenticator to return valid API key and organization code
+            _mockAuthenticator.Setup(x => x.ApiKey).Returns("test-api-key");
+            _mockAuthenticator.Setup(x => x.OrganizationCode).Returns("test-org");
+
             _manuscriptModule = new ManuscriptModule(
                 _mockHttpClient.Object,
                 _mockAuthenticator.Object,

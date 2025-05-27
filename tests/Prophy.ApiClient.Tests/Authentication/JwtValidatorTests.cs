@@ -208,14 +208,15 @@ namespace Prophy.ApiClient.Tests.Authentication
             var claims = new JwtLoginClaims
             {
                 Subject = "test_user",
-                Email = "test@example.com"
-                // Missing organization claim
+                Email = "test@example.com",
+                Organization = "TestOrg"
+                // Role is not set, so it won't be added to the token
             };
 
             var token = _tokenGenerator.GenerateToken(claims, _secretKey);
             var options = new JwtValidationOptions
             {
-                RequiredClaims = new[] { "sub", "email", "organization" }
+                RequiredClaims = new[] { "sub", "email", "organization", "role" }
             };
 
             // Act
@@ -243,7 +244,7 @@ namespace Prophy.ApiClient.Tests.Authentication
             {
                 RequiredClaimValues = new Dictionary<string, string>
                 {
-                    { "role", "Admin" },
+                    { ClaimTypes.Role, "Admin" },
                     { "organization", "TestOrg" }
                 }
             };
@@ -272,7 +273,7 @@ namespace Prophy.ApiClient.Tests.Authentication
             {
                 RequiredClaimValues = new Dictionary<string, string>
                 {
-                    { "role", "Admin" }
+                    { ClaimTypes.Role, "Admin" }
                 }
             };
 
@@ -281,7 +282,7 @@ namespace Prophy.ApiClient.Tests.Authentication
 
             // Assert
             Assert.False(result.IsValid);
-            Assert.Contains("claim value", result.ErrorMessage!.ToLower());
+            Assert.Contains("does not match required value", result.ErrorMessage!.ToLower());
         }
 
         [Fact]
@@ -329,7 +330,7 @@ namespace Prophy.ApiClient.Tests.Authentication
             // Arrange
             var principal = new ClaimsPrincipal(new ClaimsIdentity(new[]
             {
-                new Claim("role", "Admin")
+                new Claim(ClaimTypes.Role, "Admin")
             }));
 
             // Act
@@ -345,7 +346,7 @@ namespace Prophy.ApiClient.Tests.Authentication
             // Arrange
             var principal = new ClaimsPrincipal(new ClaimsIdentity(new[]
             {
-                new Claim("role", "User")
+                new Claim(ClaimTypes.Role, "User")
             }));
 
             // Act
@@ -361,7 +362,7 @@ namespace Prophy.ApiClient.Tests.Authentication
             // Arrange
             var principal = new ClaimsPrincipal(new ClaimsIdentity(new[]
             {
-                new Claim("role", "Admin")
+                new Claim(ClaimTypes.Role, "Admin")
             }));
 
             var roles = new[] { "User", "Admin", "Manager" };
@@ -379,7 +380,7 @@ namespace Prophy.ApiClient.Tests.Authentication
             // Arrange
             var principal = new ClaimsPrincipal(new ClaimsIdentity(new[]
             {
-                new Claim("role", "Guest")
+                new Claim(ClaimTypes.Role, "Guest")
             }));
 
             var roles = new[] { "User", "Admin", "Manager" };

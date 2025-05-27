@@ -52,7 +52,7 @@ namespace Prophy.ApiClient.Authentication
                     return JwtValidationResult.Failed("Token is not a valid JWT");
 
                 // Additional custom validations
-                var customValidationResult = PerformCustomValidations(jwtToken, options);
+                var customValidationResult = PerformCustomValidations(jwtToken, options, principal);
                 if (!customValidationResult.IsValid)
                     return customValidationResult;
 
@@ -154,8 +154,9 @@ namespace Prophy.ApiClient.Authentication
         /// </summary>
         /// <param name="jwtToken">The JWT token to validate.</param>
         /// <param name="options">The validation options.</param>
+        /// <param name="principal">The claims principal from token validation.</param>
         /// <returns>The validation result.</returns>
-        private JwtValidationResult PerformCustomValidations(JwtSecurityToken jwtToken, JwtValidationOptions options)
+        private JwtValidationResult PerformCustomValidations(JwtSecurityToken jwtToken, JwtValidationOptions options, ClaimsPrincipal principal)
         {
             // Validate required claims
             if (options.RequiredClaims?.Any() == true)
@@ -187,7 +188,10 @@ namespace Prophy.ApiClient.Authentication
             {
                 foreach (var requiredClaim in options.RequiredClaimValues)
                 {
-                    var claimValue = jwtToken.Claims.FirstOrDefault(c => c.Type == requiredClaim.Key)?.Value;
+                    // Check both the JWT token claims and the principal claims for flexibility
+                    var claimValue = jwtToken.Claims.FirstOrDefault(c => c.Type == requiredClaim.Key)?.Value ??
+                                   principal.FindFirst(requiredClaim.Key)?.Value;
+                    
                     if (claimValue != requiredClaim.Value)
                     {
                         _logger.LogWarning("JWT token claim value mismatch for {ClaimType}. Expected: {Expected}, Actual: {Actual}", 
@@ -197,7 +201,7 @@ namespace Prophy.ApiClient.Authentication
                 }
             }
 
-            return JwtValidationResult.Success(null, jwtToken);
+            return JwtValidationResult.Success(principal, jwtToken);
         }
     }
 } 

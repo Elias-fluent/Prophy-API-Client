@@ -202,7 +202,7 @@ namespace Prophy.ApiClient.Tests.Modules
             {
                 await timeoutModule.ExecuteAsync(async ct =>
                 {
-                    await Task.Delay(500, ct); // Longer than timeout
+                    await Task.Delay(500, ct); // Longer than timeout, use cancellation token
                     return new HttpResponseMessage(HttpStatusCode.OK);
                 });
             });

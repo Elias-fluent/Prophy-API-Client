@@ -73,7 +73,7 @@ namespace Prophy.ApiClient.Modules
 
             try
             {
-                var result = await _globalPipeline.ExecuteAsync(async (context) => await operation(cancellationToken), cancellationToken);
+                var result = await _globalPipeline.ExecuteAsync(async (ct) => await operation(ct), cancellationToken);
                 IncrementMetric("global.requests.success");
                 return result;
             }
@@ -100,7 +100,7 @@ namespace Prophy.ApiClient.Modules
             
             try
             {
-                var result = await pipeline.ExecuteAsync(async (context) => await operation(cancellationToken), cancellationToken);
+                var result = await pipeline.ExecuteAsync(async (ct) => await operation(ct), cancellationToken);
                 IncrementMetric($"{endpointName}.requests.success");
                 return result;
             }

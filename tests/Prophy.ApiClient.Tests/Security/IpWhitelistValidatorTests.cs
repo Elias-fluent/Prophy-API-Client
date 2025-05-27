@@ -377,11 +377,19 @@ namespace Prophy.ApiClient.Tests.Security
         [InlineData("192.168.1.0/")]
         [InlineData("192.168.1.0/abc")]
         [InlineData("invalid-ip/24")]
-        [InlineData("192.168.1.0/33")]
         public void Parse_WithInvalidCidr_ThrowsArgumentException(string cidr)
         {
             // Act & Assert
             Assert.Throws<ArgumentException>(() => IpRange.Parse(cidr));
+        }
+
+        [Theory]
+        [InlineData("192.168.1.0/33")]
+        [InlineData("10.0.0.0/129")]
+        public void Parse_WithInvalidPrefixLength_ThrowsArgumentOutOfRangeException(string cidr)
+        {
+            // Act & Assert
+            Assert.Throws<ArgumentOutOfRangeException>(() => IpRange.Parse(cidr));
         }
 
         [Fact]

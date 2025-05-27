@@ -34,6 +34,8 @@ namespace Prophy.ApiClient.Tests.Http
         public async Task SendAsync_LogsRequestAndResponse_WhenSuccessful()
         {
             // Arrange
+            _mockLogger.Setup(x => x.IsEnabled(LogLevel.Debug)).Returns(true);
+            
             var expectedResponse = new HttpResponseMessage(HttpStatusCode.OK)
             {
                 Content = new StringContent("Success response")
@@ -71,6 +73,9 @@ namespace Prophy.ApiClient.Tests.Http
         public async Task SendAsync_LogsWarning_WhenRequestFails()
         {
             // Arrange
+            _mockLogger.Setup(x => x.IsEnabled(LogLevel.Warning)).Returns(true);
+            _mockLogger.Setup(x => x.IsEnabled(LogLevel.Debug)).Returns(true);
+            
             var expectedResponse = new HttpResponseMessage(HttpStatusCode.BadRequest)
             {
                 Content = new StringContent("Bad request"),
@@ -263,6 +268,9 @@ namespace Prophy.ApiClient.Tests.Http
         public async Task SendAsync_LogsSlowRequest_WhenExceedsThreshold()
         {
             // Arrange
+            _mockLogger.Setup(x => x.IsEnabled(LogLevel.Warning)).Returns(true);
+            _mockLogger.Setup(x => x.IsEnabled(LogLevel.Debug)).Returns(true);
+            
             var options = new LoggingOptions { SlowRequestThresholdMs = 100 };
             var loggingHandler = new LoggingHandler(_mockLogger.Object, options)
             {

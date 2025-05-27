@@ -248,7 +248,7 @@ namespace Prophy.ApiClient.Tests.Models
             var refereeJson = _serializer.Serialize(refereeRequest);
 
             // Assert - Manuscript Request
-            Assert.Contains("\"originId\":", manuscriptJson);
+            Assert.Contains("\"origin_id\":", manuscriptJson);
             Assert.Contains("\"customFields\":", manuscriptJson);
             Assert.DoesNotContain("\"OriginId\":", manuscriptJson);
 

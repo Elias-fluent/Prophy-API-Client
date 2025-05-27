@@ -214,7 +214,7 @@ namespace Prophy.ApiClient.IntegrationTests
             {
                 await resilienceModule.ExecuteAsync("timeout-test", async ct =>
                 {
-                    await Task.Delay(1000, ct); // Longer than timeout
+                    await Task.Delay(1000, ct); // Longer than timeout, use cancellation token
                     return new HttpResponseMessage(HttpStatusCode.OK);
                 });
             });

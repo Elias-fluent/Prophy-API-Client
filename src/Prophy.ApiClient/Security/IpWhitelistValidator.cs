@@ -55,7 +55,14 @@ namespace Prophy.ApiClient.Security
                 return true;
             }
 
-            // Parse the IP address
+            // Parse the IP address with strict validation
+            if (!IsValidIpAddressFormat(ipAddress))
+            {
+                _logger.LogWarning("IP address validation failed: invalid IP format: {IpAddress}", ipAddress);
+                LogSecurityViolation("INVALID_IP_FORMAT", $"Invalid IP address format: {ipAddress}", userIdentity, ipAddress);
+                return false;
+            }
+
             if (!IPAddress.TryParse(ipAddress, out var ip))
             {
                 _logger.LogWarning("IP address validation failed: invalid IP format: {IpAddress}", ipAddress);
@@ -273,6 +280,39 @@ namespace Prophy.ApiClient.Security
                 ["Timestamp"] = DateTimeOffset.UtcNow,
                 ["DetectionMethod"] = "IP Whitelist Validation"
             });
+        }
+
+        private static bool IsValidIpAddressFormat(string ipAddress)
+        {
+            // Check for IPv4 format: exactly 4 octets separated by dots
+            var parts = ipAddress.Split('.');
+            if (parts.Length == 4)
+            {
+                // Validate each octet
+                foreach (var part in parts)
+                {
+                    if (string.IsNullOrEmpty(part) || part.Length > 3)
+                        return false;
+                    
+                    if (!int.TryParse(part, out var octet) || octet < 0 || octet > 255)
+                        return false;
+                    
+                    // Reject leading zeros (except for "0" itself)
+                    if (part.Length > 1 && part[0] == '0')
+                        return false;
+                }
+                return true;
+            }
+
+            // Check for IPv6 format: contains colons
+            if (ipAddress.Contains(':'))
+            {
+                // For IPv6, we'll rely on IPAddress.TryParse for detailed validation
+                // but ensure it has the basic IPv6 structure
+                return ipAddress.Split(':').Length >= 3; // Minimum valid IPv6 has at least 3 parts
+            }
+
+            return false;
         }
     }
 

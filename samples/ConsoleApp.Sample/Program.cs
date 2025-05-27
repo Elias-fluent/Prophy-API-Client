@@ -2,6 +2,7 @@
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
 using Prophy.ApiClient;
+using Prophy.ApiClient.Models.Requests;
 
 namespace ConsoleApp.Sample
 {
@@ -13,124 +14,107 @@ namespace ConsoleApp.Sample
             Console.WriteLine("==================================");
             Console.WriteLine();
 
-            // Create a simple console logger
+            // Configure logging
             using var loggerFactory = LoggerFactory.Create(builder =>
                 builder.AddConsole().SetMinimumLevel(LogLevel.Information));
             
-            var logger = loggerFactory.CreateLogger<ProphyApiClient>();
+            var logger = loggerFactory.CreateLogger<Program>();
 
             try
             {
-                // Initialize the Prophy API client with real credentials
-                // Note: In a real application, these would come from configuration
-                var apiKey = "VVfPN8VqhhYgImx3jLqb_4aZBLhSM9XdMq1Pm0rj";
-                var organizationCode = "Flexigrant";
+                // Initialize the Prophy API client
+                // Note: Replace with your actual API key and organization code
+                var apiKey = Environment.GetEnvironmentVariable("PROPHY_API_KEY") ?? "your-api-key-here";
+                var organizationCode = Environment.GetEnvironmentVariable("PROPHY_ORG_CODE") ?? "your-org-code";
 
-                Console.WriteLine($"Initializing Prophy API Client...");
-                Console.WriteLine($"Organization: {organizationCode}");
-                Console.WriteLine($"API Key: {apiKey[..10]}...");
-                Console.WriteLine();
+                if (apiKey == "your-api-key-here" || organizationCode == "your-org-code")
+                {
+                    logger.LogWarning("Please set PROPHY_API_KEY and PROPHY_ORG_CODE environment variables or update the code with your actual credentials.");
+                    return;
+                }
 
-                using var client = new ProphyApiClient(apiKey, organizationCode, logger: logger);
+                var clientLogger = loggerFactory.CreateLogger<ProphyApiClient>();
+                using var client = new ProphyApiClient(apiKey, organizationCode, logger: clientLogger);
 
-                Console.WriteLine($"✅ Client initialized successfully!");
-                Console.WriteLine($"   Base URL: {client.BaseUrl}");
-                Console.WriteLine($"   Organization: {client.OrganizationCode}");
-                Console.WriteLine();
+                logger.LogInformation("Prophy API Client initialized successfully!");
+                logger.LogInformation("Organization: {OrganizationCode}", client.OrganizationCode);
+                logger.LogInformation("Base URL: {BaseUrl}", client.BaseUrl);
 
-                // Demonstrate getting the HTTP client wrapper
-                var httpClient = client.GetHttpClient();
-                Console.WriteLine($"✅ HTTP client wrapper obtained: {httpClient.GetType().Name}");
+                // Test Journal Recommendation API
+                await TestJournalRecommendations(client, logger);
 
-                // Demonstrate getting the authenticator
-                var authenticator = client.GetAuthenticator();
-                Console.WriteLine($"✅ Authenticator obtained: {authenticator.GetType().Name}");
-                Console.WriteLine($"   API Key: {authenticator.ApiKey[..10]}...");
-                Console.WriteLine($"   Organization: {authenticator.OrganizationCode}");
-                Console.WriteLine();
+                // Test Custom Fields API
+                await TestCustomFields(client, logger);
 
-                Console.WriteLine("🎉 HTTP infrastructure is working correctly!");
-                Console.WriteLine();
-
-                // Demonstrate the serialization layer
-                Console.WriteLine("Running serialization layer demonstration...");
-                Console.WriteLine();
-                await SerializationDemo.RunAsync(logger);
-                Console.WriteLine();
-
-                // Demonstrate manuscript upload functionality
-                Console.WriteLine("Running manuscript upload demonstration...");
-                Console.WriteLine();
-                await ManuscriptDemo.RunAsync(client, logger);
-                Console.WriteLine();
-
-                // Demonstrate configuration system
-                Console.WriteLine("Running configuration system demonstration...");
-                Console.WriteLine();
-                await ConfigurationDemo.RunAsync(logger);
-                Console.WriteLine();
-
-                // Demonstrate custom fields functionality
-                Console.WriteLine("Running custom fields demonstration...");
-                Console.WriteLine();
-                var customFieldLogger = loggerFactory.CreateLogger<CustomFieldDemo>();
-                var customFieldDemo = new CustomFieldDemo(client, customFieldLogger);
-                await customFieldDemo.RunAllDemosAsync();
-                Console.WriteLine();
-
-                // Demonstrate webhook functionality
-                Console.WriteLine("Running webhook demonstration...");
-                Console.WriteLine();
-                var webhookDemo = new WebhookDemo(client);
-                await webhookDemo.RunAsync();
-                Console.WriteLine();
-
-                // Demonstrate security functionality
-                Console.WriteLine("Running security features demonstration...");
-                Console.WriteLine();
-                await SecurityDemo.RunSecurityDemoAsync();
-                Console.WriteLine();
-
-                // Demonstrate IP whitelisting functionality
-                Console.WriteLine("Running IP whitelisting demonstration...");
-                Console.WriteLine();
-                await IpWhitelistDemo.RunAsync(logger);
-                Console.WriteLine();
-
-                // Demonstrate security policy enforcement
-                Console.WriteLine("Running security policy enforcement demonstration...");
-                Console.WriteLine();
-                await SecurityPolicyDemo.RunAsync(logger);
-                Console.WriteLine();
-
-                // Demonstrate OAuth integration and JWT validation
-                Console.WriteLine("Running OAuth integration and JWT validation demonstration...");
-                Console.WriteLine();
-                await OAuthJwtDemo.RunAsync(logger);
-                Console.WriteLine();
-
-                // Test real API with correct format
-                Console.WriteLine("=".PadRight(50, '='));
-                Console.WriteLine();
-                await TestRealApi.RunAsync();
-                Console.WriteLine();
-
-                Console.WriteLine("Next steps:");
-                Console.WriteLine("- Task 6: Implement journal recommendation API");
-                Console.WriteLine("- Task 7: Implement author groups management");
-                Console.WriteLine("- ✅ Task 9: Custom fields handling (COMPLETED)");
-                Console.WriteLine("- ✅ Task 10: Webhook support (COMPLETED)");
-                Console.WriteLine();
+                logger.LogInformation("Sample completed successfully!");
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"❌ Error: {ex.Message}");
-                Console.WriteLine($"Stack trace: {ex.StackTrace}");
-                return;
+                logger.LogError(ex, "An error occurred during sample execution");
             }
 
             Console.WriteLine("Press any key to exit...");
             Console.ReadKey();
+        }
+
+        private static async Task TestJournalRecommendations(ProphyApiClient client, ILogger logger)
+        {
+            try
+            {
+                logger.LogInformation("Testing Journal Recommendation API...");
+
+                // Test with a sample manuscript ID
+                var manuscriptId = "sample-manuscript-123";
+                
+                var request = new JournalRecommendationRequest
+                {
+                    ManuscriptId = manuscriptId,
+                    Limit = 5,
+                    MinRelevanceScore = 0.7,
+                    OpenAccessOnly = false,
+                    IncludeRelatedArticles = true
+                };
+
+                logger.LogInformation("Requesting journal recommendations for manuscript: {ManuscriptId}", manuscriptId);
+
+                var recommendations = await client.Journals.GetRecommendationsAsync(request);
+
+                logger.LogInformation("Received {Count} journal recommendations", recommendations.Recommendations?.Count ?? 0);
+
+                if (recommendations.Recommendations != null)
+                {
+                    foreach (var journal in recommendations.Recommendations)
+                    {
+                        logger.LogInformation("Journal: {Title} (Score: {Score:F2})", 
+                            journal.Title, journal.RelevanceScore);
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "Error testing Journal Recommendation API");
+            }
+        }
+
+        private static async Task TestCustomFields(ProphyApiClient client, ILogger logger)
+        {
+            try
+            {
+                logger.LogInformation("Testing Custom Fields API...");
+
+                var customFields = await client.CustomFields.GetAllDefinitionsAsync();
+
+                logger.LogInformation("Retrieved {Count} custom fields", customFields.Count);
+
+                foreach (var field in customFields)
+                {
+                    logger.LogInformation("Custom Field: {Name} ({Type})", field.Name, field.DataType);
+                }
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "Error testing Custom Fields API");
+            }
         }
     }
 }

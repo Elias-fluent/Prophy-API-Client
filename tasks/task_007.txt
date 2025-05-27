@@ -1,6 +1,6 @@
 # Task ID: 7
 # Title: Implement Journal Recommendation API
-# Status: pending
+# Status: done
 # Dependencies: 2, 3, 4
 # Priority: medium
 # Description: Develop functionality for retrieving journal recommendations based on manuscript content.

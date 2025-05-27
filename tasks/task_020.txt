@@ -1,6 +1,6 @@
 # Task ID: 20
 # Title: Develop Rate Limiting and Circuit Breaker
-# Status: pending
+# Status: in-progress
 # Dependencies: 2, 11
 # Priority: medium
 # Description: Implement advanced resilience patterns for production use.
@@ -9,3 +9,52 @@ Implement client-side rate limiting to respect API quotas. Develop circuit break
 
 # Test Strategy:
 Unit test rate limiting behavior under high load. Verify circuit breaker trips and recovers correctly. Test integration with logging and monitoring systems.
+
+# Subtasks:
+## 1. Design ResilienceModule Architecture [in-progress]
+### Dependencies: None
+### Description: Define the architecture and interfaces for the ResilienceModule to manage rate limiting and circuit breaker features, ensuring compatibility with existing HTTP infrastructure.
+### Details:
+Establish clear module boundaries, configuration injection points, and extension methods for integrating Polly-based resilience strategies. Plan for extensibility and maintainability.
+<info added on 2025-05-27T01:07:28.147Z>
+Implementation of ResilienceModule architecture has begun with several key findings:
+
+1. Project is already using Polly 8.2.0, which is newer than the 7.2.3 mentioned in the task description.
+2. Implementation will leverage the modern Polly 8.x API with better .NET DI integration.
+3. Polly 8.x uses ResiliencePipeline instead of Policy classes.
+4. Polly.RateLimiting package needs to be added for rate limiting functionality.
+
+Architecture plan:
+- Create IResilienceModule interface for dependency injection
+- Implement ResilienceModule with pipeline builders
+- Develop configuration classes for rate limiting and circuit breaker settings
+- Integrate with existing HTTP infrastructure via extension methods
+- Support both global and per-endpoint resilience strategies
+
+This approach maintains the established module boundaries while leveraging the latest Polly capabilities for better resilience implementation.
+</info added on 2025-05-27T01:07:28.147Z>
+
+## 2. Implement Client-Side Rate Limiting with Polly [pending]
+### Dependencies: 20.1
+### Description: Develop and configure client-side rate limiting using Polly 7.2.3's rate limiter strategies to respect API quotas.
+### Details:
+Utilize Polly's AddRateLimiter and AddConcurrencyLimiter strategies, configuring options such as permit limits, window size, and queue length. Handle RateLimiterRejectedException for rejected requests.
+
+## 3. Implement Circuit Breaker Pattern with Polly [pending]
+### Dependencies: 20.1
+### Description: Develop a circuit breaker policy using Polly 7.2.3 to handle API outages and prevent cascading failures.
+### Details:
+Configure circuit breaker thresholds, durations, and fallback behaviors. Integrate with the ResilienceModule and ensure proper handling of open, half-open, and closed states.
+
+## 4. Integrate ResilienceModule with HTTP Infrastructure [pending]
+### Dependencies: 20.2, 20.3
+### Description: Integrate the ResilienceModule into the existing HTTP client pipeline, ensuring seamless application of rate limiting and circuit breaker policies.
+### Details:
+Inject the ResilienceModule into HTTP client factories or middleware. Ensure configuration options are externally configurable and policies are applied per endpoint or globally as needed.
+
+## 5. Implement Monitoring, Configuration, and Testing [pending]
+### Dependencies: 20.4
+### Description: Add monitoring, logging, and configuration management for resilience policies. Develop comprehensive tests for all resilience scenarios.
+### Details:
+Expose metrics for rate limiting and circuit breaker events. Provide runtime configuration options and detailed logs. Create unit and integration tests covering normal, throttled, and failure scenarios.
+

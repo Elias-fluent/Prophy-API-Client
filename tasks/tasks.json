@@ -90,7 +90,7 @@
         3,
         4
       ],
-      "status": "pending",
+      "status": "done",
       "subtasks": []
     },
     {
@@ -379,8 +379,63 @@
         2,
         11
       ],
-      "status": "pending",
-      "subtasks": []
+      "status": "in-progress",
+      "subtasks": [
+        {
+          "id": 1,
+          "title": "Design ResilienceModule Architecture",
+          "description": "Define the architecture and interfaces for the ResilienceModule to manage rate limiting and circuit breaker features, ensuring compatibility with existing HTTP infrastructure.",
+          "dependencies": [],
+          "details": "Establish clear module boundaries, configuration injection points, and extension methods for integrating Polly-based resilience strategies. Plan for extensibility and maintainability.\n<info added on 2025-05-27T01:07:28.147Z>\nImplementation of ResilienceModule architecture has begun with several key findings:\n\n1. Project is already using Polly 8.2.0, which is newer than the 7.2.3 mentioned in the task description.\n2. Implementation will leverage the modern Polly 8.x API with better .NET DI integration.\n3. Polly 8.x uses ResiliencePipeline instead of Policy classes.\n4. Polly.RateLimiting package needs to be added for rate limiting functionality.\n\nArchitecture plan:\n- Create IResilienceModule interface for dependency injection\n- Implement ResilienceModule with pipeline builders\n- Develop configuration classes for rate limiting and circuit breaker settings\n- Integrate with existing HTTP infrastructure via extension methods\n- Support both global and per-endpoint resilience strategies\n\nThis approach maintains the established module boundaries while leveraging the latest Polly capabilities for better resilience implementation.\n</info added on 2025-05-27T01:07:28.147Z>",
+          "status": "in-progress",
+          "testStrategy": "Review architecture with stakeholders and validate integration points using interface-based unit tests."
+        },
+        {
+          "id": 2,
+          "title": "Implement Client-Side Rate Limiting with Polly",
+          "description": "Develop and configure client-side rate limiting using Polly 7.2.3's rate limiter strategies to respect API quotas.",
+          "dependencies": [
+            1
+          ],
+          "details": "Utilize Polly's AddRateLimiter and AddConcurrencyLimiter strategies, configuring options such as permit limits, window size, and queue length. Handle RateLimiterRejectedException for rejected requests.",
+          "status": "pending",
+          "testStrategy": "Simulate high-frequency API calls and verify that requests exceeding quotas are rejected or queued as configured."
+        },
+        {
+          "id": 3,
+          "title": "Implement Circuit Breaker Pattern with Polly",
+          "description": "Develop a circuit breaker policy using Polly 7.2.3 to handle API outages and prevent cascading failures.",
+          "dependencies": [
+            1
+          ],
+          "details": "Configure circuit breaker thresholds, durations, and fallback behaviors. Integrate with the ResilienceModule and ensure proper handling of open, half-open, and closed states.",
+          "status": "pending",
+          "testStrategy": "Induce API failures and verify circuit breaker transitions and fallback execution using automated tests."
+        },
+        {
+          "id": 4,
+          "title": "Integrate ResilienceModule with HTTP Infrastructure",
+          "description": "Integrate the ResilienceModule into the existing HTTP client pipeline, ensuring seamless application of rate limiting and circuit breaker policies.",
+          "dependencies": [
+            2,
+            3
+          ],
+          "details": "Inject the ResilienceModule into HTTP client factories or middleware. Ensure configuration options are externally configurable and policies are applied per endpoint or globally as needed.",
+          "status": "pending",
+          "testStrategy": "Perform end-to-end integration tests with real HTTP requests, validating correct policy enforcement and error handling."
+        },
+        {
+          "id": 5,
+          "title": "Implement Monitoring, Configuration, and Testing",
+          "description": "Add monitoring, logging, and configuration management for resilience policies. Develop comprehensive tests for all resilience scenarios.",
+          "dependencies": [
+            4
+          ],
+          "details": "Expose metrics for rate limiting and circuit breaker events. Provide runtime configuration options and detailed logs. Create unit and integration tests covering normal, throttled, and failure scenarios.",
+          "status": "pending",
+          "testStrategy": "Verify metrics and logs during simulated load and failure conditions. Ensure configuration changes are applied dynamically and all test cases pass."
+        }
+      ]
     },
     {
       "id": 21,

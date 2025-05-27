@@ -97,9 +97,8 @@ namespace ConsoleApp.Sample
                     GroupName = "Physics Reviewers 2024",
                     Description = "Expert reviewers for physics manuscripts in 2024",
                     OwnerTeam = "Editorial Board",
-                    EditorTeams = new[] { "Senior Editors", "Associate Editors" },
-                    ViewerTeams = new[] { "Review Committee", "Quality Assurance" },
-                    IsActive = true,
+                    EditorTeams = new List<string> { "Senior Editors", "Associate Editors" },
+                    ViewerTeams = new List<string> { "Review Committee", "Quality Assurance" },
                     Metadata = new Dictionary<string, object>
                     {
                         ["subject_area"] = "Physics",
@@ -137,9 +136,8 @@ namespace ConsoleApp.Sample
                     GroupName = "Machine Learning Experts",
                     Description = "Specialists in machine learning and artificial intelligence research",
                     OwnerTeam = "AI Research Division",
-                    EditorTeams = new[] { "ML Editors" },
-                    ViewerTeams = new[] { "Research Committee" },
-                    IsActive = true,
+                    EditorTeams = new List<string> { "ML Editors" },
+                    ViewerTeams = new List<string> { "Research Committee" },
                     Metadata = new Dictionary<string, object>
                     {
                         ["subject_area"] = "Computer Science",
@@ -199,46 +197,48 @@ namespace ConsoleApp.Sample
                         Console.WriteLine("   Groups:");
                         foreach (var group in allGroups.Data.Take(3))
                         {
-                            Console.WriteLine($"   • {group.GroupName} (ID: {group.Id})");
-                            Console.WriteLine($"     Authors: {group.AuthorCount}, Active: {group.IsActive}");
+                            Console.WriteLine($"   - {group.GroupName} (ID: {group.Id}, Authors: {group.AuthorCount})");
+                            Console.WriteLine($"     Owner: {group.OwnerTeam}");
+                            if (group.EditorTeams?.Any() == true)
+                                Console.WriteLine($"     Editors: {string.Join(", ", group.EditorTeams)}");
                         }
                     }
                 }
                 catch (ProphyApiException ex)
                 {
                     _logger.LogWarning("⚠️ API call failed (expected in demo): {Message}", ex.Message);
-                    Console.WriteLine("⚠️ API call simulation - would retrieve groups list");
-                    Console.WriteLine("   Sample groups:");
-                    Console.WriteLine("   • Physics Reviewers 2024 (ID: group_001)");
-                    Console.WriteLine("     Authors: 25, Active: True");
-                    Console.WriteLine("   • Machine Learning Experts (ID: group_002)");
-                    Console.WriteLine("     Authors: 18, Active: True");
+                    Console.WriteLine("⚠️ API call simulation - would retrieve author groups");
                 }
 
                 Console.WriteLine();
 
                 // Get a specific author group by ID
-                var groupId = "group_001";
+                var groupId = "sample-group-id-123";
                 _logger.LogInformation("Retrieving specific author group: {GroupId}", groupId);
-                Console.WriteLine($"🔍 Retrieving specific group: {groupId}");
+                Console.WriteLine($"📋 Retrieving group by ID: {groupId}");
 
                 try
                 {
                     var specificGroup = await _client.AuthorGroups.GetByIdAsync(groupId, includeAuthors: true);
-                    _logger.LogInformation("✅ Retrieved group: {GroupName}", specificGroup.Data?.GroupName);
+                    _logger.LogInformation("✅ Retrieved author group: {GroupName}", specificGroup.Data?.GroupName);
                     Console.WriteLine($"✅ Retrieved group: {specificGroup.Data?.GroupName}");
                     Console.WriteLine($"   Description: {specificGroup.Data?.Description}");
-                    Console.WriteLine($"   Owner: {specificGroup.Data?.OwnerTeam}");
-                    Console.WriteLine($"   Authors: {specificGroup.Data?.AuthorCount}");
+                    Console.WriteLine($"   Author Count: {specificGroup.Data?.AuthorCount}");
+                    Console.WriteLine($"   Created: {specificGroup.Data?.CreatedAt:yyyy-MM-dd}");
+                    
+                    if (specificGroup.Data?.Authors?.Any() == true)
+                    {
+                        Console.WriteLine("   Authors included in response:");
+                        foreach (var author in specificGroup.Data.Authors.Take(3))
+                        {
+                            Console.WriteLine($"   - {author.Name} ({author.Affiliation})");
+                        }
+                    }
                 }
                 catch (ProphyApiException ex)
                 {
                     _logger.LogWarning("⚠️ API call failed (expected in demo): {Message}", ex.Message);
-                    Console.WriteLine("⚠️ API call simulation - would retrieve specific group");
-                    Console.WriteLine("   Group: Physics Reviewers 2024");
-                    Console.WriteLine("   Description: Expert reviewers for physics manuscripts in 2024");
-                    Console.WriteLine("   Owner: Editorial Board");
-                    Console.WriteLine("   Authors: 25");
+                    Console.WriteLine($"⚠️ API call simulation - would retrieve group: {groupId}");
                 }
             }
             catch (Exception ex)
@@ -258,65 +258,36 @@ namespace ConsoleApp.Sample
 
             try
             {
-                var groupId = "group_001";
-                
-                // Update group description and teams
+                var groupId = "sample-group-id-123";
                 var updateRequest = new UpdateAuthorGroupRequest
                 {
-                    Description = "Updated: Expert reviewers for physics manuscripts in 2024 - Now including quantum physics specialists",
-                    EditorTeams = new[] { "Senior Editors", "Associate Editors", "Quantum Physics Editors" },
-                    ViewerTeams = new[] { "Review Committee", "Quality Assurance", "Research Board" },
+                    Description = "Updated description for the author group",
+                    EditorTeams = new List<string> { "Senior Editors", "Associate Editors", "Guest Editors" },
+                    ViewerTeams = new List<string> { "Review Committee", "Quality Assurance", "External Reviewers" },
                     Metadata = new Dictionary<string, object>
                     {
-                        ["subject_area"] = "Physics",
-                        ["year"] = 2024,
-                        ["expertise_level"] = "Expert",
-                        ["specializations"] = new[] { "General Physics", "Quantum Physics", "Theoretical Physics" },
-                        ["last_updated"] = DateTime.UtcNow
+                        ["last_updated"] = DateTime.UtcNow,
+                        ["update_reason"] = "Added new editor and viewer teams"
                     }
                 };
 
                 _logger.LogInformation("Updating author group: {GroupId}", groupId);
                 Console.WriteLine($"📝 Updating group: {groupId}");
-                Console.WriteLine($"   New description: {updateRequest.Description}");
-                Console.WriteLine($"   Added editor team: Quantum Physics Editors");
-                Console.WriteLine($"   Added viewer team: Research Board");
-                Console.WriteLine($"   Added specializations metadata");
+                Console.WriteLine($"   New Description: {updateRequest.Description}");
+                Console.WriteLine($"   Updated Editor Teams: {string.Join(", ", updateRequest.EditorTeams ?? new List<string>())}");
+                Console.WriteLine($"   Updated Viewer Teams: {string.Join(", ", updateRequest.ViewerTeams ?? new List<string>())}");
 
                 try
                 {
                     var updatedGroup = await _client.AuthorGroups.UpdateAsync(groupId, updateRequest);
-                    _logger.LogInformation("✅ Successfully updated author group: {GroupId}", groupId);
-                    Console.WriteLine($"✅ Group updated successfully");
-                    Console.WriteLine($"   Updated at: {updatedGroup.Data?.UpdatedAt}");
+                    _logger.LogInformation("✅ Successfully updated author group: {GroupName}", updatedGroup.Data?.GroupName);
+                    Console.WriteLine($"✅ Group updated successfully: {updatedGroup.Data?.GroupName}");
+                    Console.WriteLine($"   Updated at: {updatedGroup.Data?.UpdatedAt:yyyy-MM-dd HH:mm:ss}");
                 }
                 catch (ProphyApiException ex)
                 {
                     _logger.LogWarning("⚠️ API call failed (expected in demo): {Message}", ex.Message);
-                    Console.WriteLine("⚠️ API call simulation - would update group successfully");
-                }
-
-                Console.WriteLine();
-
-                // Partial update example
-                var partialUpdateRequest = new UpdateAuthorGroupRequest
-                {
-                    IsActive = false // Deactivate the group
-                };
-
-                _logger.LogInformation("Performing partial update (deactivating group): {GroupId}", groupId);
-                Console.WriteLine($"🔄 Performing partial update - deactivating group: {groupId}");
-
-                try
-                {
-                    var partiallyUpdatedGroup = await _client.AuthorGroups.UpdateAsync(groupId, partialUpdateRequest);
-                    _logger.LogInformation("✅ Successfully deactivated author group: {GroupId}", groupId);
-                    Console.WriteLine($"✅ Group deactivated successfully");
-                }
-                catch (ProphyApiException ex)
-                {
-                    _logger.LogWarning("⚠️ API call failed (expected in demo): {Message}", ex.Message);
-                    Console.WriteLine("⚠️ API call simulation - would deactivate group");
+                    Console.WriteLine($"⚠️ API call simulation - would update group: {groupId}");
                 }
             }
             catch (Exception ex)
@@ -336,90 +307,91 @@ namespace ConsoleApp.Sample
 
             try
             {
-                var groupId = "group_001";
-                
-                // Add a comprehensive author profile
+                var groupId = "sample-group-id-123";
+                var clientId = "client-author-001";
+
+                // Create a comprehensive author request
                 var authorRequest = new AuthorFromGroupRequest
                 {
-                    Name = "Dr. Sarah Johnson",
-                    FirstName = "Sarah",
-                    LastName = "Johnson",
-                    MiddleName = "Elizabeth",
-                    Emails = new[] { "sarah.johnson@university.edu", "s.johnson@research.org" },
-                    Orcids = new[] { "0000-0002-1234-5678" },
-                    Affiliations = new[] { "MIT Physics Department", "Quantum Research Institute" },
-                    Countries = new[] { "United States" },
-                    Keywords = new[] { "quantum physics", "theoretical physics", "particle physics", "quantum mechanics" },
-                    HIndex = 42,
-                    CitationCount = 1250,
-                    PublicationCount = 85,
+                    Name = "Dr. Jane Smith",
+                    FirstName = "Jane",
+                    LastName = "Smith",
+                    Emails = new List<string> { "jane.smith@university.edu", "j.smith@research.org" },
+                    Orcids = new List<string> { "0000-0000-0000-0001" },
+                    Affiliations = new List<string> { "University of Science", "Research Institute" },
+                    PrimaryAffiliation = "University of Science",
+                    Country = "United States",
+                    ResearchAreas = new List<string> { "Machine Learning", "Artificial Intelligence", "Data Science" },
+                    HIndex = 25,
+                    CitationCount = 1500,
+                    PublicationCount = 45,
                     IsActive = true,
-                    CustomFields = new Dictionary<string, object>
+                    Metadata = new Dictionary<string, object>
                     {
                         ["expertise_level"] = "Senior",
                         ["years_experience"] = 15,
-                        ["preferred_subjects"] = new[] { "Quantum Mechanics", "Particle Physics" },
-                        ["languages"] = new[] { "English", "German", "French" },
-                        ["availability"] = "High"
+                        ["preferred_topics"] = new[] { "Deep Learning", "Neural Networks" }
                     }
                 };
 
-                var clientId = "author_001";
-                
-                _logger.LogInformation("Adding author to group: {GroupId}, Author: {AuthorName}", groupId, authorRequest.Name);
+                _logger.LogInformation("Adding author to group: {GroupId}, Client ID: {ClientId}", groupId, clientId);
                 Console.WriteLine($"👤 Adding author to group: {groupId}");
-                Console.WriteLine($"   Name: {authorRequest.Name}");
-                Console.WriteLine($"   Email: {authorRequest.Emails?.FirstOrDefault()}");
-                Console.WriteLine($"   ORCID: {authorRequest.Orcids?.FirstOrDefault()}");
-                Console.WriteLine($"   Affiliation: {authorRequest.Affiliations?.FirstOrDefault()}");
-                Console.WriteLine($"   H-Index: {authorRequest.HIndex}");
-                Console.WriteLine($"   Citations: {authorRequest.CitationCount}");
-                Console.WriteLine($"   Publications: {authorRequest.PublicationCount}");
-                Console.WriteLine($"   Keywords: {string.Join(", ", authorRequest.Keywords ?? new string[0])}");
+                Console.WriteLine($"   Client ID: {clientId}");
+                Console.WriteLine($"   Author: {authorRequest.Name}");
+                Console.WriteLine($"   Emails: {string.Join(", ", authorRequest.Emails)}");
+                Console.WriteLine($"   ORCID: {string.Join(", ", authorRequest.Orcids)}");
+                Console.WriteLine($"   Primary Affiliation: {authorRequest.PrimaryAffiliation}");
+                Console.WriteLine($"   Research Areas: {string.Join(", ", authorRequest.ResearchAreas)}");
+                Console.WriteLine($"   H-Index: {authorRequest.HIndex}, Citations: {authorRequest.CitationCount}");
 
                 try
                 {
                     var addedAuthor = await _client.AuthorGroups.AddAuthorAsync(groupId, clientId, authorRequest);
-                    _logger.LogInformation("✅ Successfully added author to group: {AuthorName}", authorRequest.Name);
-                    Console.WriteLine($"✅ Author added successfully");
-                    Console.WriteLine($"   Author ID: {addedAuthor.Data?.Id}");
-                    Console.WriteLine($"   Group: {addedAuthor.GroupName}");
+                    _logger.LogInformation("✅ Successfully added author: {AuthorName}", addedAuthor.Data?.Name);
+                    Console.WriteLine($"✅ Author added successfully: {addedAuthor.Data?.Name}");
                 }
                 catch (ProphyApiException ex)
                 {
                     _logger.LogWarning("⚠️ API call failed (expected in demo): {Message}", ex.Message);
-                    Console.WriteLine("⚠️ API call simulation - would add author successfully");
+                    Console.WriteLine($"⚠️ API call simulation - would add author: {authorRequest.Name}");
                 }
 
                 Console.WriteLine();
 
-                // Add another author with minimal information
-                var minimalAuthorRequest = new AuthorFromGroupRequest
+                // Add another author with different profile
+                var clientId2 = "client-author-002";
+                var authorRequest2 = new AuthorFromGroupRequest
                 {
-                    Name = "Prof. Michael Chen",
-                    Emails = new[] { "m.chen@university.edu" },
-                    Affiliations = new[] { "Stanford University" },
-                    Keywords = new[] { "machine learning", "artificial intelligence" },
+                    Name = "Prof. Michael Johnson",
+                    FirstName = "Michael",
+                    LastName = "Johnson",
+                    Emails = new List<string> { "m.johnson@tech.edu" },
+                    Orcids = new List<string> { "0000-0000-0000-0002" },
+                    Affiliations = new List<string> { "Technology Institute" },
+                    PrimaryAffiliation = "Technology Institute",
+                    Country = "Canada",
+                    ResearchAreas = new List<string> { "Computer Vision", "Robotics" },
+                    HIndex = 35,
+                    CitationCount = 2800,
+                    PublicationCount = 78,
                     IsActive = true
                 };
 
-                var clientId2 = "author_002";
-                
-                _logger.LogInformation("Adding minimal author profile: {AuthorName}", minimalAuthorRequest.Name);
-                Console.WriteLine($"👤 Adding minimal author profile: {minimalAuthorRequest.Name}");
-                Console.WriteLine($"   Email: {minimalAuthorRequest.Emails?.FirstOrDefault()}");
-                Console.WriteLine($"   Affiliation: {minimalAuthorRequest.Affiliations?.FirstOrDefault()}");
+                _logger.LogInformation("Adding second author to group: {GroupId}, Client ID: {ClientId}", groupId, clientId2);
+                Console.WriteLine($"👤 Adding second author to group: {groupId}");
+                Console.WriteLine($"   Author: {authorRequest2.Name}");
+                Console.WriteLine($"   Specialization: Computer Vision & Robotics");
 
                 try
                 {
-                    var addedMinimalAuthor = await _client.AuthorGroups.AddAuthorAsync(groupId, clientId2, minimalAuthorRequest);
-                    _logger.LogInformation("✅ Successfully added minimal author to group: {AuthorName}", minimalAuthorRequest.Name);
-                    Console.WriteLine($"✅ Minimal author added successfully");
+                    var addedAuthor2 = await _client.AuthorGroups.AddAuthorAsync(groupId, clientId2, authorRequest2);
+                    _logger.LogInformation("✅ Successfully added second author: {AuthorName}", addedAuthor2.Data?.Name);
+                    Console.WriteLine($"✅ Second author added successfully: {addedAuthor2.Data?.Name}");
                 }
                 catch (ProphyApiException ex)
                 {
                     _logger.LogWarning("⚠️ API call failed (expected in demo): {Message}", ex.Message);
-                    Console.WriteLine("⚠️ API call simulation - would add minimal author successfully");
+                    Console.WriteLine($"⚠️ API call simulation - would add author: {authorRequest2.Name}");
                 }
             }
             catch (Exception ex)
@@ -439,74 +411,71 @@ namespace ConsoleApp.Sample
 
             try
             {
-                var groupId = "group_001";
-                var clientId = "author_001";
+                var groupId = "sample-group-id-123";
+                var clientId = "client-author-001";
 
-                // Get author from group
+                // Get a specific author from the group
                 _logger.LogInformation("Retrieving author from group: {GroupId}, Client ID: {ClientId}", groupId, clientId);
-                Console.WriteLine($"🔍 Retrieving author from group: {groupId}");
+                Console.WriteLine($"👤 Retrieving author from group: {groupId}");
+                Console.WriteLine($"   Client ID: {clientId}");
 
                 try
                 {
                     var retrievedAuthor = await _client.AuthorGroups.GetAuthorAsync(groupId, clientId);
                     _logger.LogInformation("✅ Retrieved author: {AuthorName}", retrievedAuthor.Data?.Name);
                     Console.WriteLine($"✅ Retrieved author: {retrievedAuthor.Data?.Name}");
-                    Console.WriteLine($"   Email: {retrievedAuthor.Data?.Emails?.FirstOrDefault()}");
+                    Console.WriteLine($"   Primary Affiliation: {retrievedAuthor.Data?.Affiliation}");
                     Console.WriteLine($"   H-Index: {retrievedAuthor.Data?.HIndex}");
                 }
                 catch (ProphyApiException ex)
                 {
                     _logger.LogWarning("⚠️ API call failed (expected in demo): {Message}", ex.Message);
-                    Console.WriteLine("⚠️ API call simulation - would retrieve author: Dr. Sarah Johnson");
+                    Console.WriteLine($"⚠️ API call simulation - would retrieve author: {clientId}");
                 }
 
                 Console.WriteLine();
 
-                // Update author information
+                // Update the author's information
                 var updateAuthorRequest = new AuthorFromGroupRequest
                 {
-                    Name = "Dr. Sarah Johnson",
-                    FirstName = "Sarah",
-                    LastName = "Johnson",
-                    MiddleName = "Elizabeth",
-                    Emails = new[] { "sarah.johnson@university.edu", "s.johnson@research.org", "sarah.j@newaffiliation.edu" },
-                    Orcids = new[] { "0000-0002-1234-5678" },
-                    Affiliations = new[] { "MIT Physics Department", "Quantum Research Institute", "New Quantum Lab" },
-                    Countries = new[] { "United States" },
-                    Keywords = new[] { "quantum physics", "theoretical physics", "particle physics", "quantum mechanics", "quantum computing" },
-                    HIndex = 45, // Updated H-Index
-                    CitationCount = 1350, // Updated citation count
-                    PublicationCount = 92, // Updated publication count
+                    Name = "Dr. Jane Smith-Wilson",
+                    FirstName = "Jane",
+                    LastName = "Smith-Wilson",
+                    Emails = new List<string> { "jane.smith-wilson@university.edu", "j.wilson@research.org" },
+                    Orcids = new List<string> { "0000-0000-0000-0001" },
+                    Affiliations = new List<string> { "University of Science", "Advanced Research Institute" },
+                    PrimaryAffiliation = "Advanced Research Institute",
+                    Country = "United States",
+                    ResearchAreas = new List<string> { "Machine Learning", "Artificial Intelligence", "Quantum Computing" },
+                    HIndex = 28,
+                    CitationCount = 1750,
+                    PublicationCount = 52,
                     IsActive = true,
-                    CustomFields = new Dictionary<string, object>
+                    Metadata = new Dictionary<string, object>
                     {
                         ["expertise_level"] = "Senior",
-                        ["years_experience"] = 16, // Updated
-                        ["preferred_subjects"] = new[] { "Quantum Mechanics", "Particle Physics", "Quantum Computing" },
-                        ["languages"] = new[] { "English", "German", "French" },
-                        ["availability"] = "High",
-                        ["recent_awards"] = new[] { "Excellence in Physics Research 2024" }
+                        ["years_experience"] = 16,
+                        ["recent_promotion"] = "Full Professor"
                     }
                 };
 
-                _logger.LogInformation("Updating author information: {ClientId}", clientId);
-                Console.WriteLine($"📝 Updating author information: {clientId}");
-                Console.WriteLine($"   Added new affiliation: New Quantum Lab");
-                Console.WriteLine($"   Added new keyword: quantum computing");
-                Console.WriteLine($"   Updated H-Index: 42 → 45");
-                Console.WriteLine($"   Updated Citations: 1250 → 1350");
-                Console.WriteLine($"   Updated Publications: 85 → 92");
+                _logger.LogInformation("Updating author in group: {GroupId}, Client ID: {ClientId}", groupId, clientId);
+                Console.WriteLine($"📝 Updating author in group: {groupId}");
+                Console.WriteLine($"   Updated Name: {updateAuthorRequest.Name}");
+                Console.WriteLine($"   New Primary Affiliation: {updateAuthorRequest.PrimaryAffiliation}");
+                Console.WriteLine($"   Updated H-Index: {updateAuthorRequest.HIndex}");
+                Console.WriteLine($"   New Research Area: Quantum Computing");
 
                 try
                 {
                     var updatedAuthor = await _client.AuthorGroups.UpdateAuthorAsync(groupId, clientId, updateAuthorRequest);
-                    _logger.LogInformation("✅ Successfully updated author: {AuthorName}", updateAuthorRequest.Name);
-                    Console.WriteLine($"✅ Author updated successfully");
+                    _logger.LogInformation("✅ Successfully updated author: {AuthorName}", updatedAuthor.Data?.Name);
+                    Console.WriteLine($"✅ Author updated successfully: {updatedAuthor.Data?.Name}");
                 }
                 catch (ProphyApiException ex)
                 {
                     _logger.LogWarning("⚠️ API call failed (expected in demo): {Message}", ex.Message);
-                    Console.WriteLine("⚠️ API call simulation - would update author successfully");
+                    Console.WriteLine($"⚠️ API call simulation - would update author: {updateAuthorRequest.Name}");
                 }
 
                 Console.WriteLine();
@@ -517,25 +486,24 @@ namespace ConsoleApp.Sample
 
                 try
                 {
-                    var authorsInGroup = await _client.AuthorGroups.GetAuthorsAsync(groupId, page: 1, pageSize: 10);
-                    _logger.LogInformation("✅ Retrieved {Count} authors from group", authorsInGroup.Count);
-                    Console.WriteLine($"✅ Found {authorsInGroup.Count} authors in group");
+                    var allAuthors = await _client.AuthorGroups.GetAuthorsAsync(groupId, page: 1, pageSize: 10, includeInactive: false);
+                    _logger.LogInformation("✅ Retrieved {Count} authors from group", allAuthors?.Count ?? 0);
+                    Console.WriteLine($"✅ Found {allAuthors?.Count ?? 0} authors in group");
                     
-                    foreach (var author in authorsInGroup.Take(3))
+                    if (allAuthors?.Any() == true)
                     {
-                        Console.WriteLine($"   • {author.Name} (H-Index: {author.HIndex})");
-                        Console.WriteLine($"     {author.Affiliations?.FirstOrDefault()}");
+                        Console.WriteLine("   Authors:");
+                        foreach (var author in allAuthors.Take(5))
+                        {
+                            Console.WriteLine($"   - {author.Name} (H-Index: {author.HIndex}, Citations: {author.CitationCount})");
+                            Console.WriteLine($"     Affiliation: {author.Affiliation}");
+                        }
                     }
                 }
                 catch (ProphyApiException ex)
                 {
                     _logger.LogWarning("⚠️ API call failed (expected in demo): {Message}", ex.Message);
-                    Console.WriteLine("⚠️ API call simulation - would retrieve authors list");
-                    Console.WriteLine("   Sample authors:");
-                    Console.WriteLine("   • Dr. Sarah Johnson (H-Index: 45)");
-                    Console.WriteLine("     MIT Physics Department");
-                    Console.WriteLine("   • Prof. Michael Chen (H-Index: 38)");
-                    Console.WriteLine("     Stanford University");
+                    Console.WriteLine($"⚠️ API call simulation - would retrieve all authors from group: {groupId}");
                 }
             }
             catch (Exception ex)
@@ -546,7 +514,7 @@ namespace ConsoleApp.Sample
         }
 
         /// <summary>
-        /// Demonstrates searching author groups.
+        /// Demonstrates searching for author groups.
         /// </summary>
         private async Task DemoSearchAuthorGroups()
         {
@@ -555,65 +523,48 @@ namespace ConsoleApp.Sample
 
             try
             {
-                // Search by subject area
-                var searchTerm = "physics";
-                _logger.LogInformation("Searching author groups with term: {SearchTerm}", searchTerm);
-                Console.WriteLine($"🔍 Searching for groups containing: '{searchTerm}'");
+                var searchTerms = new[] { "Physics", "Machine Learning", "Biology" };
 
-                try
+                foreach (var searchTerm in searchTerms)
                 {
-                    var searchResults = await _client.AuthorGroups.SearchAsync(searchTerm, page: 1, pageSize: 10);
-                    _logger.LogInformation("✅ Found {Count} groups matching search term", searchResults.Data?.Count ?? 0);
-                    Console.WriteLine($"✅ Found {searchResults.Data?.Count ?? 0} groups matching '{searchTerm}'");
-                    
-                    if (searchResults.Data?.Any() == true)
+                    _logger.LogInformation("Searching for author groups with term: {SearchTerm}", searchTerm);
+                    Console.WriteLine($"🔍 Searching for groups containing: '{searchTerm}'");
+
+                    try
                     {
-                        foreach (var group in searchResults.Data.Take(3))
+                        var searchResults = await _client.AuthorGroups.SearchAsync(searchTerm, page: 1, pageSize: 5);
+                        _logger.LogInformation("✅ Found {Count} groups matching '{SearchTerm}'", searchResults.Data?.Count ?? 0, searchTerm);
+                        Console.WriteLine($"✅ Found {searchResults.Data?.Count ?? 0} groups matching '{searchTerm}'");
+                        
+                        if (searchResults.Data?.Any() == true)
                         {
-                            Console.WriteLine($"   • {group.GroupName}");
-                            Console.WriteLine($"     {group.Description}");
-                            Console.WriteLine($"     Authors: {group.AuthorCount}");
+                            foreach (var group in searchResults.Data)
+                            {
+                                Console.WriteLine($"   - {group.GroupName} (ID: {group.Id})");
+                                Console.WriteLine($"     Description: {group.Description}");
+                                Console.WriteLine($"     Authors: {group.AuthorCount}, Owner: {group.OwnerTeam}");
+                            }
+                        }
+
+                        // Display pagination info if available
+                        if (searchResults.Pagination != null)
+                        {
+                            Console.WriteLine($"   Page {searchResults.Pagination.Page} of {searchResults.Pagination.TotalPages}");
+                            Console.WriteLine($"   Total results: {searchResults.Pagination.TotalCount}");
                         }
                     }
-                }
-                catch (ProphyApiException ex)
-                {
-                    _logger.LogWarning("⚠️ API call failed (expected in demo): {Message}", ex.Message);
-                    Console.WriteLine("⚠️ API call simulation - would find matching groups");
-                    Console.WriteLine("   Sample results:");
-                    Console.WriteLine("   • Physics Reviewers 2024");
-                    Console.WriteLine("     Expert reviewers for physics manuscripts in 2024");
-                    Console.WriteLine("     Authors: 25");
-                    Console.WriteLine("   • Theoretical Physics Experts");
-                    Console.WriteLine("     Specialists in theoretical physics research");
-                    Console.WriteLine("     Authors: 18");
-                }
+                    catch (ProphyApiException ex)
+                    {
+                        _logger.LogWarning("⚠️ API call failed (expected in demo): {Message}", ex.Message);
+                        Console.WriteLine($"⚠️ API call simulation - would search for: '{searchTerm}'");
+                    }
 
-                Console.WriteLine();
-
-                // Search by specialization
-                var specializationSearch = "machine learning";
-                _logger.LogInformation("Searching for specialization: {SearchTerm}", specializationSearch);
-                Console.WriteLine($"🔍 Searching for groups with specialization: '{specializationSearch}'");
-
-                try
-                {
-                    var specializationResults = await _client.AuthorGroups.SearchAsync(specializationSearch, page: 1, pageSize: 5);
-                    _logger.LogInformation("✅ Found {Count} groups with specialization", specializationResults.Data?.Count ?? 0);
-                    Console.WriteLine($"✅ Found {specializationResults.Data?.Count ?? 0} groups with '{specializationSearch}' specialization");
-                }
-                catch (ProphyApiException ex)
-                {
-                    _logger.LogWarning("⚠️ API call failed (expected in demo): {Message}", ex.Message);
-                    Console.WriteLine("⚠️ API call simulation - would find ML groups");
-                    Console.WriteLine("   • Machine Learning Experts");
-                    Console.WriteLine("     Specialists in machine learning and artificial intelligence research");
-                    Console.WriteLine("     Authors: 18");
+                    Console.WriteLine();
                 }
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error during search demo");
+                _logger.LogError(ex, "Error during search author groups demo");
                 Console.WriteLine($"❌ Error searching author groups: {ex.Message}");
             }
         }
@@ -628,71 +579,83 @@ namespace ConsoleApp.Sample
 
             try
             {
-                var groupId = "group_001";
-                var clientId = "author_002";
+                // Create a temporary group for deletion demo
+                var tempGroupRequest = new CreateAuthorGroupRequest
+                {
+                    GroupName = "Temporary Test Group",
+                    Description = "This group will be deleted as part of the demo",
+                    OwnerTeam = "Demo Team",
+                    EditorTeams = new List<string> { "Test Editors" },
+                    Metadata = new Dictionary<string, object>
+                    {
+                        ["temporary"] = true,
+                        ["demo_purpose"] = "deletion_test"
+                    }
+                };
 
-                // Remove an author from a group
+                _logger.LogInformation("Creating temporary group for deletion demo: {GroupName}", tempGroupRequest.GroupName);
+                Console.WriteLine($"📝 Creating temporary group for deletion demo: {tempGroupRequest.GroupName}");
+
+                string? tempGroupId = null;
+                try
+                {
+                    var tempGroupResponse = await _client.AuthorGroups.CreateAsync(tempGroupRequest);
+                    tempGroupId = tempGroupResponse.Data?.Id;
+                    _logger.LogInformation("✅ Created temporary group with ID: {GroupId}", tempGroupId);
+                    Console.WriteLine($"✅ Temporary group created with ID: {tempGroupId}");
+                }
+                catch (ProphyApiException ex)
+                {
+                    _logger.LogWarning("⚠️ API call failed (expected in demo): {Message}", ex.Message);
+                    Console.WriteLine($"⚠️ API call simulation - would create temporary group");
+                    tempGroupId = "temp-group-demo-123"; // Use a demo ID for the deletion example
+                }
+
+                Console.WriteLine();
+
+                // Delete the temporary group
+                if (!string.IsNullOrEmpty(tempGroupId))
+                {
+                    _logger.LogInformation("Deleting temporary group: {GroupId}", tempGroupId);
+                    Console.WriteLine($"🗑️ Deleting temporary group: {tempGroupId}");
+
+                    try
+                    {
+                        await _client.AuthorGroups.DeleteAsync(tempGroupId);
+                        _logger.LogInformation("✅ Successfully deleted temporary group: {GroupId}", tempGroupId);
+                        Console.WriteLine($"✅ Temporary group deleted successfully: {tempGroupId}");
+                    }
+                    catch (ProphyApiException ex)
+                    {
+                        _logger.LogWarning("⚠️ API call failed (expected in demo): {Message}", ex.Message);
+                        Console.WriteLine($"⚠️ API call simulation - would delete group: {tempGroupId}");
+                    }
+                }
+
+                Console.WriteLine();
+
+                // Delete an author from a group
+                var groupId = "sample-group-id-123";
+                var clientId = "client-author-002";
                 _logger.LogInformation("Removing author from group: {GroupId}, Client ID: {ClientId}", groupId, clientId);
-                Console.WriteLine($"🗑️ Removing author from group: {groupId}");
+                Console.WriteLine($"👤 Removing author from group: {groupId}");
                 Console.WriteLine($"   Client ID: {clientId}");
 
                 try
                 {
                     await _client.AuthorGroups.DeleteAuthorAsync(groupId, clientId);
-                    _logger.LogInformation("✅ Successfully removed author from group");
-                    Console.WriteLine($"✅ Author removed successfully");
+                    _logger.LogInformation("✅ Successfully removed author from group: {ClientId}", clientId);
+                    Console.WriteLine($"✅ Author removed successfully: {clientId}");
                 }
                 catch (ProphyApiException ex)
                 {
                     _logger.LogWarning("⚠️ API call failed (expected in demo): {Message}", ex.Message);
-                    Console.WriteLine("⚠️ API call simulation - would remove author successfully");
-                }
-
-                Console.WriteLine();
-
-                // Get paginated results
-                _logger.LogInformation("Demonstrating pagination with large page size");
-                Console.WriteLine($"📄 Demonstrating pagination (page 1, size 5)");
-
-                try
-                {
-                    var paginatedGroups = await _client.AuthorGroups.GetAllAsync(page: 1, pageSize: 5, includeInactive: true);
-                    _logger.LogInformation("✅ Retrieved page 1 with {Count} groups", paginatedGroups.Data?.Count ?? 0);
-                    Console.WriteLine($"✅ Page 1: {paginatedGroups.Data?.Count ?? 0} groups");
-                    Console.WriteLine($"   Total available: {paginatedGroups.TotalCount}");
-                    Console.WriteLine($"   Has next page: {paginatedGroups.HasNextPage}");
-                }
-                catch (ProphyApiException ex)
-                {
-                    _logger.LogWarning("⚠️ API call failed (expected in demo): {Message}", ex.Message);
-                    Console.WriteLine("⚠️ API call simulation - pagination example");
-                    Console.WriteLine("   Page 1: 5 groups");
-                    Console.WriteLine("   Total available: 23");
-                    Console.WriteLine("   Has next page: True");
-                }
-
-                Console.WriteLine();
-
-                // Delete an entire group
-                var groupToDelete = "group_002";
-                _logger.LogInformation("Deleting entire author group: {GroupId}", groupToDelete);
-                Console.WriteLine($"🗑️ Deleting entire group: {groupToDelete}");
-
-                try
-                {
-                    await _client.AuthorGroups.DeleteAsync(groupToDelete);
-                    _logger.LogInformation("✅ Successfully deleted author group: {GroupId}", groupToDelete);
-                    Console.WriteLine($"✅ Group deleted successfully");
-                }
-                catch (ProphyApiException ex)
-                {
-                    _logger.LogWarning("⚠️ API call failed (expected in demo): {Message}", ex.Message);
-                    Console.WriteLine("⚠️ API call simulation - would delete group successfully");
+                    Console.WriteLine($"⚠️ API call simulation - would remove author: {clientId}");
                 }
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error during advanced operations demo");
+                _logger.LogError(ex, "Error during advanced group operations demo");
                 Console.WriteLine($"❌ Error in advanced group operations: {ex.Message}");
             }
         }
@@ -703,79 +666,75 @@ namespace ConsoleApp.Sample
         private async Task DemoErrorHandling()
         {
             _logger.LogInformation("📋 Demo 8: Error Handling");
-            _logger.LogInformation("-------------------------");
+            _logger.LogInformation("--------------------------");
 
             try
             {
-                // Test validation errors
-                Console.WriteLine("🚨 Testing validation errors...");
+                // Demonstrate validation errors
+                Console.WriteLine("🚫 Testing validation errors...");
                 
-                var invalidGroupRequest = new CreateAuthorGroupRequest
-                {
-                    GroupName = "", // Invalid - empty name
-                    Description = null, // Invalid - null description
-                    OwnerTeam = "", // Invalid - empty owner team
-                    EditorTeams = new string[0], // Invalid - empty array
-                    ViewerTeams = null, // Invalid - null array
-                    IsActive = true
-                };
-
                 try
                 {
-                    await _client.AuthorGroups.CreateAsync(invalidGroupRequest);
+                    var invalidRequest = new CreateAuthorGroupRequest
+                    {
+                        GroupName = "", // Invalid: empty name
+                        OwnerTeam = "Valid Team"
+                    };
+                    
+                    await _client.AuthorGroups.CreateAsync(invalidRequest);
                 }
-                catch (ValidationException ex)
+                catch (ArgumentException ex)
                 {
                     _logger.LogInformation("✅ Caught expected validation error: {Message}", ex.Message);
                     Console.WriteLine($"✅ Validation error caught: {ex.Message}");
-                    Console.WriteLine($"   Validation errors: {ex.ValidationErrors?.Count ?? 0}");
                 }
-                catch (Exception ex)
+                catch (ProphyApiException ex)
                 {
-                    _logger.LogInformation("✅ Caught validation-related error: {Message}", ex.Message);
-                    Console.WriteLine($"✅ Validation-related error: {ex.Message}");
+                    _logger.LogInformation("✅ Caught expected API error: {ErrorCode} - {Message}", ex.ErrorCode, ex.Message);
+                    Console.WriteLine($"✅ API error caught: {ex.ErrorCode} - {ex.Message}");
+                    if (ex.HttpStatusCode.HasValue)
+                        Console.WriteLine($"   HTTP Status: {ex.HttpStatusCode}");
                 }
 
                 Console.WriteLine();
 
-                // Test API errors
-                Console.WriteLine("🚨 Testing API error scenarios...");
+                // Demonstrate not found errors
+                Console.WriteLine("🚫 Testing not found errors...");
                 
                 try
                 {
-                    // Try to get a non-existent group
                     await _client.AuthorGroups.GetByIdAsync("non-existent-group-id");
                 }
                 catch (ProphyApiException ex)
                 {
-                    _logger.LogInformation("✅ Caught expected API error: {ErrorCode}", ex.ErrorCode);
-                    Console.WriteLine($"✅ API error caught: {ex.ErrorCode}");
-                    Console.WriteLine($"   Status: {ex.StatusCode}");
-                    Console.WriteLine($"   Message: {ex.Message}");
-                }
-                catch (Exception ex)
-                {
-                    _logger.LogInformation("✅ Caught API-related error: {Message}", ex.Message);
-                    Console.WriteLine($"✅ API-related error: {ex.Message}");
+                    _logger.LogInformation("✅ Caught expected not found error: {ErrorCode} - {Message}", ex.ErrorCode, ex.Message);
+                    Console.WriteLine($"✅ Not found error caught: {ex.ErrorCode} - {ex.Message}");
+                    if (ex.HttpStatusCode.HasValue)
+                        Console.WriteLine($"   HTTP Status: {ex.HttpStatusCode}");
                 }
 
                 Console.WriteLine();
 
-                // Test network errors
-                Console.WriteLine("🚨 Testing network error handling...");
-                Console.WriteLine("⚠️ Network errors would be handled gracefully in production");
-                Console.WriteLine("   • Connection timeouts");
-                Console.WriteLine("   • DNS resolution failures");
-                Console.WriteLine("   • SSL certificate errors");
-                Console.WriteLine("   • Rate limiting responses");
+                // Demonstrate parameter validation
+                Console.WriteLine("🚫 Testing parameter validation...");
+                
+                try
+                {
+                    await _client.AuthorGroups.GetAllAsync(page: 0, pageSize: 2000); // Invalid parameters
+                }
+                catch (ArgumentException ex)
+                {
+                    _logger.LogInformation("✅ Caught expected parameter validation error: {Message}", ex.Message);
+                    Console.WriteLine($"✅ Parameter validation error caught: {ex.Message}");
+                }
 
-                _logger.LogInformation("✅ Error handling demonstration completed");
-                Console.WriteLine("✅ Error handling scenarios demonstrated");
+                _logger.LogInformation("✅ Error handling demonstration completed successfully");
+                Console.WriteLine("✅ Error handling demonstration completed successfully");
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error during error handling demo");
-                Console.WriteLine($"❌ Error in error handling demo: {ex.Message}");
+                _logger.LogError(ex, "Unexpected error during error handling demo");
+                Console.WriteLine($"❌ Unexpected error during error handling demo: {ex.Message}");
             }
         }
     }

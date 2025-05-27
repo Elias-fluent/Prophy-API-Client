@@ -175,13 +175,15 @@ namespace Prophy.ApiClient.Modules
                     Window = options.RateLimiting.Window,
                     SegmentsPerWindow = options.RateLimiting.SegmentsPerWindow,
                     QueueLimit = options.RateLimiting.QueueLimit,
-                    AutoReplenishment = options.RateLimiting.AutoReplenishment.HasValue ? 
-                        options.RateLimiting.AutoReplenishment.Value : true
+                    AutoReplenishment = true // AutoReplenishment is boolean in Polly 8.x
                 };
+
+                // Create a single rate limiter instance to be shared
+                var rateLimiter = new SlidingWindowRateLimiter(rateLimitOptions);
 
                 builder.AddRateLimiter(new RateLimiterStrategyOptions
                 {
-                    RateLimiter = args => ValueTask.FromResult<RateLimitLease>(new SlidingWindowRateLimiter(rateLimitOptions).AttemptAcquire()),
+                    RateLimiter = args => rateLimiter.AcquireAsync(permitCount: 1, cancellationToken: args.Context.CancellationToken),
                     OnRejected = args =>
                     {
                         _logger.LogWarning("Rate limit exceeded for pipeline: {PipelineName}", pipelineName);

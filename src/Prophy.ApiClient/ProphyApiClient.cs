@@ -27,6 +27,7 @@ namespace Prophy.ApiClient
         private readonly Lazy<ICustomFieldModule> _customFields;
         private readonly Lazy<IWebhookModule> _webhooks;
         private readonly Lazy<IJournalRecommendationModule> _journals;
+        private readonly Lazy<IAuthorGroupModule> _authorGroups;
 
         /// <summary>
         /// Gets the base URL for the Prophy API.
@@ -57,6 +58,11 @@ namespace Prophy.ApiClient
         /// Gets the journal recommendation module for journal recommendation operations.
         /// </summary>
         public IJournalRecommendationModule Journals => _journals.Value;
+
+        /// <summary>
+        /// Gets the author groups module for author group management operations.
+        /// </summary>
+        public IAuthorGroupModule AuthorGroups => _authorGroups.Value;
 
         /// <summary>
         /// Initializes a new instance of the ProphyApiClient class with the specified API key and organization code.
@@ -116,6 +122,7 @@ namespace Prophy.ApiClient
             _customFields = new Lazy<ICustomFieldModule>(() => CreateCustomFieldModule());
             _webhooks = new Lazy<IWebhookModule>(() => CreateWebhookModule());
             _journals = new Lazy<IJournalRecommendationModule>(() => CreateJournalRecommendationModule());
+            _authorGroups = new Lazy<IAuthorGroupModule>(() => CreateAuthorGroupModule());
 
             _logger.LogInformation("ProphyApiClient initialized for organization: {OrganizationCode}, Base URL: {BaseUrl}", 
                 OrganizationCode, BaseUrl);
@@ -173,6 +180,7 @@ namespace Prophy.ApiClient
             _customFields = new Lazy<ICustomFieldModule>(() => CreateCustomFieldModule());
             _webhooks = new Lazy<IWebhookModule>(() => CreateWebhookModule());
             _journals = new Lazy<IJournalRecommendationModule>(() => CreateJournalRecommendationModule());
+            _authorGroups = new Lazy<IAuthorGroupModule>(() => CreateAuthorGroupModule());
 
             _logger.LogInformation("ProphyApiClient initialized for organization: {OrganizationCode}, Base URL: {BaseUrl}", 
                 OrganizationCode, BaseUrl);
@@ -219,6 +227,7 @@ namespace Prophy.ApiClient
             _customFields = new Lazy<ICustomFieldModule>(() => CreateCustomFieldModule());
             _webhooks = new Lazy<IWebhookModule>(() => CreateWebhookModule());
             _journals = new Lazy<IJournalRecommendationModule>(() => CreateJournalRecommendationModule());
+            _authorGroups = new Lazy<IAuthorGroupModule>(() => CreateAuthorGroupModule());
 
             _logger.LogInformation("ProphyApiClient initialized for organization: {OrganizationCode}, Base URL: {BaseUrl}", 
                 organizationCode, BaseUrl);
@@ -353,6 +362,18 @@ namespace Prophy.ApiClient
             var journalLogger = Microsoft.Extensions.Logging.Abstractions.NullLogger<JournalRecommendationModule>.Instance;
             
             return new JournalRecommendationModule(_httpClient, _authenticator, jsonSerializer, journalLogger);
+        }
+
+        /// <summary>
+        /// Creates a new instance of the author group module.
+        /// </summary>
+        /// <returns>A configured author group module instance.</returns>
+        private IAuthorGroupModule CreateAuthorGroupModule()
+        {
+            var jsonSerializer = SerializationFactory.CreateJsonSerializer();
+            var authorGroupLogger = Microsoft.Extensions.Logging.Abstractions.NullLogger<AuthorGroupModule>.Instance;
+            
+            return new AuthorGroupModule(_httpClient, _authenticator, jsonSerializer, authorGroupLogger);
         }
 
         private void ThrowIfDisposed()

@@ -86,6 +86,14 @@ namespace ConsoleApp.Sample
                 await journalDemo.RunAllDemosAsync();
                 Console.WriteLine();
 
+                // Demonstrate author group management functionality
+                Console.WriteLine("Running author group management demonstration...");
+                Console.WriteLine();
+                var authorGroupLogger = loggerFactory.CreateLogger<AuthorGroupDemo>();
+                var authorGroupDemo = new AuthorGroupDemo(client, authorGroupLogger);
+                await authorGroupDemo.RunAllDemosAsync();
+                Console.WriteLine();
+
                 // Demonstrate webhook functionality
                 Console.WriteLine("Running webhook demonstration...");
                 Console.WriteLine();

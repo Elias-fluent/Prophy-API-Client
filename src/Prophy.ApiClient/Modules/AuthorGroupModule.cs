@@ -518,6 +518,76 @@ namespace Prophy.ApiClient.Modules
         }
 
         /// <inheritdoc />
+        public async Task<AuthorFromGroupResponse> PartialUpdateAuthorAsync(string groupId, string clientId, AuthorPartialUpdateRequest request, CancellationToken cancellationToken = default)
+        {
+            if (string.IsNullOrWhiteSpace(groupId))
+                throw new ArgumentException("Group ID cannot be null or empty", nameof(groupId));
+            if (string.IsNullOrWhiteSpace(clientId))
+                throw new ArgumentException("Client ID cannot be null or empty", nameof(clientId));
+            if (request == null)
+                throw new ArgumentNullException(nameof(request));
+
+            // Validate that at least one field is being updated
+            if (!request.HasUpdates())
+                throw new ArgumentException("At least one field must be provided for partial update", nameof(request));
+
+            ValidatePartialUpdateRequest(request);
+
+            _logger.LogInformation("Partially updating author in group: {GroupId}, Client ID: {ClientId}", groupId, clientId);
+
+            try
+            {
+                var requestJson = _serializer.Serialize(request);
+                var httpRequest = new HttpRequestMessage(HttpMethod.Post, $"api/external/author-from-group/{groupId}/{clientId}/partial/")
+                {
+                    Content = new StringContent(requestJson, Encoding.UTF8, "application/json")
+                };
+
+                // Override the method to PATCH since .NET Standard 2.0 doesn't have HttpMethod.Patch
+                httpRequest.Method = new HttpMethod("PATCH");
+
+                // Add authentication headers
+                _authenticator.AuthenticateRequest(httpRequest);
+
+                var httpResponse = await _httpClient.SendAsync(httpRequest, cancellationToken);
+                var responseContent = await httpResponse.Content.ReadAsStringAsync();
+
+                if (!httpResponse.IsSuccessStatusCode)
+                {
+                    var errorMessage = $"Author partial update failed with status {httpResponse.StatusCode}";
+                    _logger.LogError("{ErrorMessage}. Response: {ResponseContent}", errorMessage, responseContent);
+                    throw new ProphyApiException(errorMessage, "AUTHOR_PARTIAL_UPDATE_FAILED", httpResponse.StatusCode, responseContent);
+                }
+
+                // Deserialize the response
+                var response = _serializer.Deserialize<AuthorFromGroupResponse>(responseContent);
+                
+                if (response == null)
+                {
+                    throw new ProphyApiException("Failed to deserialize author partial update response", "DESERIALIZATION_FAILED", httpResponse.StatusCode, responseContent);
+                }
+
+                _logger.LogInformation("Successfully partially updated author in group: {GroupId}", groupId);
+                return response;
+            }
+            catch (HttpRequestException ex)
+            {
+                _logger.LogError(ex, "HTTP error occurred while partially updating author in group: {GroupId}", groupId);
+                throw new ProphyApiException("Network error occurred while partially updating author in group", "NETWORK_ERROR", ex);
+            }
+            catch (TaskCanceledException ex) when (ex.InnerException is TimeoutException)
+            {
+                _logger.LogError(ex, "Timeout occurred while partially updating author in group: {GroupId}", groupId);
+                throw new ProphyApiException("Request timeout while partially updating author in group", "REQUEST_TIMEOUT", ex);
+            }
+            catch (Exception ex) when (!(ex is ProphyApiException))
+            {
+                _logger.LogError(ex, "Unexpected error occurred while partially updating author in group: {GroupId}", groupId);
+                throw new ProphyApiException("Unexpected error occurred while partially updating author in group", "UNEXPECTED_ERROR", ex);
+            }
+        }
+
+        /// <inheritdoc />
         public async Task DeleteAuthorAsync(string groupId, string clientId, CancellationToken cancellationToken = default)
         {
             if (string.IsNullOrWhiteSpace(groupId))
@@ -764,6 +834,34 @@ namespace Prophy.ApiClient.Modules
             if (customErrors.Count > 0)
             {
                 var errorMessage = $"Author request validation failed: {string.Join(", ", customErrors)}";
+                _logger.LogError("{ErrorMessage}", errorMessage);
+                throw new Prophy.ApiClient.Exceptions.ValidationException(errorMessage, customErrors);
+            }
+        }
+
+        /// <summary>
+        /// Validates the author partial update request.
+        /// </summary>
+        /// <param name="request">The request to validate.</param>
+        /// <exception cref="Prophy.ApiClient.Exceptions.ValidationException">Thrown when validation fails.</exception>
+        private void ValidatePartialUpdateRequest(AuthorPartialUpdateRequest request)
+        {
+            var validationResults = new List<ValidationResult>();
+            var validationContext = new ValidationContext(request);
+            
+            if (!Validator.TryValidateObject(request, validationContext, validationResults, true))
+            {
+                var errors = validationResults.Select(vr => vr.ErrorMessage).ToArray();
+                var errorMessage = $"Author partial update request validation failed: {string.Join(", ", errors)}";
+                _logger.LogError("{ErrorMessage}", errorMessage);
+                throw new Prophy.ApiClient.Exceptions.ValidationException(errorMessage, errors);
+            }
+
+            // Additional custom validation
+            var customErrors = request.Validate();
+            if (customErrors.Count > 0)
+            {
+                var errorMessage = $"Author partial update request validation failed: {string.Join(", ", customErrors)}";
                 _logger.LogError("{ErrorMessage}", errorMessage);
                 throw new Prophy.ApiClient.Exceptions.ValidationException(errorMessage, customErrors);
             }

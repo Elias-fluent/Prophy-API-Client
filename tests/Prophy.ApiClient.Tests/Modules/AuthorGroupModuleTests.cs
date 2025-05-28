@@ -745,5 +745,209 @@ namespace Prophy.ApiClient.Tests.Modules
         }
 
         #endregion
+
+        [Fact]
+        public async Task PartialUpdateAuthorAsync_WithValidRequest_ShouldReturnUpdatedAuthor()
+        {
+            // Arrange
+            var groupId = "test-group-id";
+            var clientId = "test-client-id";
+            var request = new AuthorPartialUpdateRequest
+            {
+                Name = "Updated Author Name",
+                Emails = new List<string> { "updated@example.com" }
+            };
+
+            var expectedResponse = new AuthorFromGroupResponse
+            {
+                Data = new Author
+                {
+                    Name = "Updated Author Name",
+                    Email = "updated@example.com",
+                    Affiliation = "Test University"
+                },
+                Success = true
+            };
+
+            var httpResponse = new HttpResponseMessage(HttpStatusCode.OK)
+            {
+                Content = new StringContent("{\"data\":{\"name\":\"Updated Author Name\"}}")
+            };
+
+            _mockSerializer.Setup(s => s.Serialize(request)).Returns("{\"name\":\"Updated Author Name\"}");
+            _mockHttpClient.Setup(x => x.SendAsync(It.IsAny<HttpRequestMessage>(), It.IsAny<CancellationToken>()))
+                .ReturnsAsync(httpResponse);
+            _mockSerializer.Setup(s => s.Deserialize<AuthorFromGroupResponse>(It.IsAny<string>()))
+                .Returns(expectedResponse);
+
+            // Act
+            var result = await _authorGroupModule.PartialUpdateAuthorAsync(groupId, clientId, request);
+
+            // Assert
+            Assert.NotNull(result);
+            Assert.NotNull(result.Data);
+            Assert.Equal("Updated Author Name", result.Data.Name);
+            Assert.Equal("updated@example.com", result.Data.Email);
+
+            _mockHttpClient.Verify(x => x.SendAsync(
+                It.Is<HttpRequestMessage>(req => 
+                    req.Method.Method == "PATCH" &&
+                    req.RequestUri!.ToString().Contains($"api/external/author-from-group/{groupId}/{clientId}/partial/")),
+                It.IsAny<CancellationToken>()), Times.Once);
+        }
+
+        [Fact]
+        public async Task PartialUpdateAuthorAsync_WithNullGroupId_ShouldThrowArgumentException()
+        {
+            // Arrange
+            var request = new AuthorPartialUpdateRequest { Name = "Test Name" };
+
+            // Act & Assert
+            await Assert.ThrowsAsync<ArgumentException>(() =>
+                _authorGroupModule.PartialUpdateAuthorAsync(null!, "client-id", request));
+        }
+
+        [Fact]
+        public async Task PartialUpdateAuthorAsync_WithEmptyGroupId_ShouldThrowArgumentException()
+        {
+            // Arrange
+            var request = new AuthorPartialUpdateRequest { Name = "Test Name" };
+
+            // Act & Assert
+            await Assert.ThrowsAsync<ArgumentException>(() =>
+                _authorGroupModule.PartialUpdateAuthorAsync("", "client-id", request));
+        }
+
+        [Fact]
+        public async Task PartialUpdateAuthorAsync_WithNullClientId_ShouldThrowArgumentException()
+        {
+            // Arrange
+            var request = new AuthorPartialUpdateRequest { Name = "Test Name" };
+
+            // Act & Assert
+            await Assert.ThrowsAsync<ArgumentException>(() =>
+                _authorGroupModule.PartialUpdateAuthorAsync("group-id", null!, request));
+        }
+
+        [Fact]
+        public async Task PartialUpdateAuthorAsync_WithEmptyClientId_ShouldThrowArgumentException()
+        {
+            // Arrange
+            var request = new AuthorPartialUpdateRequest { Name = "Test Name" };
+
+            // Act & Assert
+            await Assert.ThrowsAsync<ArgumentException>(() =>
+                _authorGroupModule.PartialUpdateAuthorAsync("group-id", "", request));
+        }
+
+        [Fact]
+        public async Task PartialUpdateAuthorAsync_WithNullRequest_ShouldThrowArgumentNullException()
+        {
+            // Act & Assert
+            await Assert.ThrowsAsync<ArgumentNullException>(() =>
+                _authorGroupModule.PartialUpdateAuthorAsync("group-id", "client-id", null!));
+        }
+
+        [Fact]
+        public async Task PartialUpdateAuthorAsync_WithNoUpdates_ShouldThrowArgumentException()
+        {
+            // Arrange
+            var request = new AuthorPartialUpdateRequest(); // No properties set
+
+            // Act & Assert
+            var exception = await Assert.ThrowsAsync<ArgumentException>(() =>
+                _authorGroupModule.PartialUpdateAuthorAsync("group-id", "client-id", request));
+            
+            Assert.Contains("At least one field must be provided for partial update", exception.Message);
+        }
+
+        [Fact]
+        public async Task PartialUpdateAuthorAsync_WithOnlyName_ShouldUpdateOnlyName()
+        {
+            // Arrange
+            var groupId = "test-group-id";
+            var clientId = "test-client-id";
+            var request = new AuthorPartialUpdateRequest
+            {
+                Name = "Only Name Updated"
+                // Emails and other fields are null, so they won't be updated
+            };
+
+            var expectedResponse = new AuthorFromGroupResponse
+            {
+                Data = new Author
+                {
+                    Name = "Only Name Updated",
+                    Email = "original@example.com", // Should remain unchanged
+                    Affiliation = "Original University" // Should remain unchanged
+                },
+                Success = true
+            };
+
+            var httpResponse = new HttpResponseMessage(HttpStatusCode.OK)
+            {
+                Content = new StringContent("{\"data\":{\"name\":\"Only Name Updated\"}}")
+            };
+
+            _mockSerializer.Setup(s => s.Serialize(request)).Returns("{\"name\":\"Only Name Updated\"}");
+            _mockHttpClient.Setup(x => x.SendAsync(It.IsAny<HttpRequestMessage>(), It.IsAny<CancellationToken>()))
+                .ReturnsAsync(httpResponse);
+            _mockSerializer.Setup(s => s.Deserialize<AuthorFromGroupResponse>(It.IsAny<string>()))
+                .Returns(expectedResponse);
+
+            // Act
+            var result = await _authorGroupModule.PartialUpdateAuthorAsync(groupId, clientId, request);
+
+            // Assert
+            Assert.NotNull(result);
+            Assert.NotNull(result.Data);
+            Assert.Equal("Only Name Updated", result.Data.Name);
+            Assert.Equal("original@example.com", result.Data.Email);
+        }
+
+        [Fact]
+        public async Task PartialUpdateAuthorAsync_WithHttpError_ShouldThrowProphyApiException()
+        {
+            // Arrange
+            var groupId = "test-group-id";
+            var clientId = "test-client-id";
+            var request = new AuthorPartialUpdateRequest { Name = "Test Name" };
+
+            var httpResponse = new HttpResponseMessage(HttpStatusCode.BadRequest)
+            {
+                Content = new StringContent("Bad request")
+            };
+
+            _mockSerializer.Setup(s => s.Serialize(request)).Returns("{\"name\":\"Test Name\"}");
+            _mockHttpClient.Setup(x => x.SendAsync(It.IsAny<HttpRequestMessage>(), It.IsAny<CancellationToken>()))
+                .ReturnsAsync(httpResponse);
+
+            // Act & Assert
+            var exception = await Assert.ThrowsAsync<ProphyApiException>(() =>
+                _authorGroupModule.PartialUpdateAuthorAsync(groupId, clientId, request));
+
+            Assert.Contains("Author partial update failed with status", exception.Message);
+            Assert.Equal("AUTHOR_PARTIAL_UPDATE_FAILED", exception.ErrorCode);
+        }
+
+        [Fact]
+        public async Task PartialUpdateAuthorAsync_WithNetworkError_ShouldThrowProphyApiException()
+        {
+            // Arrange
+            var groupId = "test-group-id";
+            var clientId = "test-client-id";
+            var request = new AuthorPartialUpdateRequest { Name = "Test Name" };
+
+            _mockSerializer.Setup(s => s.Serialize(request)).Returns("{\"name\":\"Test Name\"}");
+            _mockHttpClient.Setup(x => x.SendAsync(It.IsAny<HttpRequestMessage>(), It.IsAny<CancellationToken>()))
+                .ThrowsAsync(new HttpRequestException("Network error"));
+
+            // Act & Assert
+            var exception = await Assert.ThrowsAsync<ProphyApiException>(() =>
+                _authorGroupModule.PartialUpdateAuthorAsync(groupId, clientId, request));
+
+            Assert.Contains("Network error occurred while partially updating author in group", exception.Message);
+            Assert.Equal("NETWORK_ERROR", exception.ErrorCode);
+        }
     }
 } 

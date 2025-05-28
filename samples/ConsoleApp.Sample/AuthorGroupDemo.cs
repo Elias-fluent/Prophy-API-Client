@@ -480,6 +480,44 @@ namespace ConsoleApp.Sample
 
                 Console.WriteLine();
 
+                // Partial update the author's information (only specific fields)
+                var partialUpdateRequest = new AuthorPartialUpdateRequest
+                {
+                    HIndex = 30,
+                    CitationCount = 1850,
+                    ResearchAreas = new List<string> { "Machine Learning", "Artificial Intelligence", "Quantum Computing", "Neural Networks" },
+                    Metadata = new Dictionary<string, object>
+                    {
+                        ["expertise_level"] = "Senior",
+                        ["years_experience"] = 17,
+                        ["recent_achievement"] = "Best Paper Award 2024"
+                    }
+                };
+
+                _logger.LogInformation("Performing partial update for author in group: {GroupId}, Client ID: {ClientId}", groupId, clientId);
+                Console.WriteLine($"🔄 Performing partial update for author in group: {groupId}");
+                Console.WriteLine($"   Updating only: H-Index, Citation Count, Research Areas, and Metadata");
+                Console.WriteLine($"   New H-Index: {partialUpdateRequest.HIndex}");
+                Console.WriteLine($"   New Citation Count: {partialUpdateRequest.CitationCount}");
+                Console.WriteLine($"   Added Research Area: Neural Networks");
+                Console.WriteLine($"   New Achievement: Best Paper Award 2024");
+
+                try
+                {
+                    var partiallyUpdatedAuthor = await _client.AuthorGroups.PartialUpdateAuthorAsync(groupId, clientId, partialUpdateRequest);
+                    _logger.LogInformation("✅ Successfully performed partial update for author: {AuthorName}", partiallyUpdatedAuthor.Data?.Name);
+                    Console.WriteLine($"✅ Partial update completed successfully for: {partiallyUpdatedAuthor.Data?.Name}");
+                    Console.WriteLine($"   Updated H-Index: {partiallyUpdatedAuthor.Data?.HIndex}");
+                    Console.WriteLine($"   Updated Citation Count: {partiallyUpdatedAuthor.Data?.CitationCount}");
+                }
+                catch (ProphyApiException ex)
+                {
+                    _logger.LogWarning("⚠️ API call failed (expected in demo): {Message}", ex.Message);
+                    Console.WriteLine($"⚠️ API call simulation - would partially update author with H-Index: {partialUpdateRequest.HIndex}");
+                }
+
+                Console.WriteLine();
+
                 // Get all authors in the group
                 _logger.LogInformation("Retrieving all authors in group: {GroupId}", groupId);
                 Console.WriteLine($"👥 Retrieving all authors in group: {groupId}");

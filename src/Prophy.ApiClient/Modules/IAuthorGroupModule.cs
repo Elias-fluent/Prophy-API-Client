@@ -88,6 +88,17 @@ namespace Prophy.ApiClient.Modules
         Task<AuthorFromGroupResponse> UpdateAuthorAsync(string groupId, string clientId, AuthorFromGroupRequest request, CancellationToken cancellationToken = default);
 
         /// <summary>
+        /// Partially updates an author in an author group.
+        /// Only the fields that are set (non-null) in the request will be updated.
+        /// </summary>
+        /// <param name="groupId">The ID of the author group.</param>
+        /// <param name="clientId">The client-specific ID for the author.</param>
+        /// <param name="request">The request containing the fields to update. Only non-null fields will be updated.</param>
+        /// <param name="cancellationToken">Cancellation token to cancel the operation.</param>
+        /// <returns>A task that represents the asynchronous operation. The task result contains the updated author.</returns>
+        Task<AuthorFromGroupResponse> PartialUpdateAuthorAsync(string groupId, string clientId, AuthorPartialUpdateRequest request, CancellationToken cancellationToken = default);
+
+        /// <summary>
         /// Removes an author from an author group.
         /// </summary>
         /// <param name="groupId">The ID of the author group.</param>

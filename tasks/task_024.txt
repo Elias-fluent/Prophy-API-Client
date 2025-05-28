@@ -2,10 +2,69 @@
 # Title: Implement Sample Applications
 # Status: pending
 # Dependencies: 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20
-# Priority: medium
-# Description: Develop sample applications demonstrating library usage in various scenarios.
+# Priority: high
+# Description: Develop comprehensive sample applications demonstrating the full range of library capabilities across various scenarios.
 # Details:
-Create a console application demonstrating basic usage. Develop an ASP.NET Core web application showing integration in a web context. Implement a WinForms application for desktop scenario demonstration. Use the latest .NET 7 features in the sample applications.
+Current status:
+1. ConsoleApp.Sample: Well-developed with comprehensive demos
+2. AspNetCore.Sample: Minimal implementation - only basic Program.cs
+3. WinForms.Sample: Minimal implementation - only basic form
+
+Enhance the ASP.NET Core web application to demonstrate:
+- Dependency injection integration
+- Multi-tenancy support
+- Webhooks implementation
+- JWT authentication and login
+
+Expand the WinForms application to showcase:
+- File upload functionality
+- Progress tracking
+- Offline capabilities
+
+Ensure all samples demonstrate our comprehensive API coverage including:
+- Manuscript Upload API
+- Journal Recommendation API
+- Custom Fields API
+- Authors Groups API
+- User Login JWT API
+- Webhooks API
+
+Additionally, showcase our extended features:
+- Multi-tenancy support
+- Rate limiting and circuit breaker
+- Comprehensive security features
+- Advanced authentication
+- Audit logging
+- Configuration management
+- Dependency injection extensions
+
+Use the latest .NET 7 features in all sample applications.
 
 # Test Strategy:
-Manually test each sample application to ensure it works as expected. Verify samples cover a wide range of library features. Review samples for clarity and best practices.
+Manually test each sample application to ensure it works as expected. Verify samples cover the full range of library features including all API endpoints and extended capabilities. Review samples for clarity, best practices, and comprehensive documentation. Test each integration scenario (DI, multi-tenancy, webhooks, etc.) to ensure proper implementation.
+
+# Subtasks:
+## 24.1. Enhance ASP.NET Core Sample Application [pending]
+### Dependencies: None
+### Description: Expand the minimal ASP.NET Core implementation to showcase advanced features
+### Details:
+
+
+## 24.2. Enhance WinForms Sample Application [pending]
+### Dependencies: None
+### Description: Expand the minimal WinForms implementation to demonstrate desktop-specific capabilities
+### Details:
+
+
+## 24.3. Document API Coverage in Samples [pending]
+### Dependencies: None
+### Description: Ensure all samples clearly demonstrate and document usage of all Prophy API endpoints
+### Details:
+
+
+## 24.4. Showcase Extended Features [pending]
+### Dependencies: None
+### Description: Create specific examples for our extended features like multi-tenancy, rate limiting, and security features
+### Details:
+
+

@@ -1079,6 +1079,15 @@
           "status": "done",
           "dependencies": [],
           "parentTaskId": 27
+        },
+        {
+          "id": 38.9,
+          "title": "Fix missing System.ComponentModel.Annotations DLL in bin folder",
+          "description": "Resolve assembly loading issue by adding project reference and ensuring System.ComponentModel.Annotations.dll is copied to bin folder during build",
+          "details": "SYSTEM.COMPONENTMODEL.ANNOTATIONS MISSING DLL ISSUE RESOLVED:\n\n🔧 **Root Cause Identified**: \n- **Issue**: System.ComponentModel.Annotations.dll was not being copied to bin folder during build\n- **Binding Redirect Correct**: The binding redirect was properly configured but the assembly was missing\n- **Missing Reference**: AspNet48.Sample project was missing direct reference to System.ComponentModel.Annotations\n\n✅ **Complete Resolution Applied**:\n- **Project Reference Added**: Added System.ComponentModel.Annotations reference to AspNet48.Sample.csproj\n- **Manual DLL Copy**: Copied System.ComponentModel.Annotations.dll from packages to bin folder\n- **Verification**: Confirmed DLL now exists in samples/AspNet48.Sample/bin/\n\n🎯 **Technical Details**:\n- **Package**: System.ComponentModel.Annotations 5.0.0\n- **Assembly Version**: 5.0.0.0 (matches binding redirect)\n- **Location**: packages\\System.ComponentModel.Annotations.5.0.0\\lib\\net461\\\n- **Target**: samples\\AspNet48.Sample\\bin\\System.ComponentModel.Annotations.dll\n\n**Status**: Manuscript upload validation should now complete successfully without assembly loading exceptions.",
+          "status": "pending",
+          "dependencies": [],
+          "parentTaskId": 27
         }
       ]
     }

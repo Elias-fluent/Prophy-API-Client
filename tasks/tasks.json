@@ -1070,6 +1070,15 @@
           "status": "done",
           "dependencies": [],
           "parentTaskId": 27
+        },
+        {
+          "id": 37.9,
+          "title": "Fix System.ComponentModel.Annotations assembly binding for manuscript upload",
+          "description": "Resolve System.ComponentModel.Annotations FileNotFoundException during ManuscriptModule.UploadAsync by adding missing assembly binding redirect",
+          "details": "SYSTEM.COMPONENTMODEL.ANNOTATIONS ASSEMBLY BINDING ISSUE RESOLVED:\n\n🔧 **Additional Assembly Binding Fix Applied**:\n- **Error**: `System.ComponentModel.Annotations, Version=4.2.0.0` FileNotFoundException during manuscript upload in ManuscriptModule.UploadAsync\n- **Root Cause**: Missing binding redirect for System.ComponentModel.Annotations assembly\n- **Installed Package**: System.ComponentModel.Annotations version 5.0.0 (NuGet package)\n- **Assembly Version**: 5.0.0.0 (standard for this package version)\n\n✅ **New Binding Redirect Added**:\n- **System.ComponentModel.Annotations**: Added binding redirect 0.0.0.0-5.0.0.0 → 5.0.0.0\n\n🎯 **Context**: \nThis error occurred when the ProphyApiClient.ManuscriptModule tried to upload the manuscript. The module uses data annotations for validation, which requires System.ComponentModel.Annotations.\n\n**Complete Assembly Binding Fix Status**: \n- ✅ System.Text.Json assembly binding (previous fix)\n- ✅ System.ComponentModel.Annotations assembly binding (this fix)\n- ✅ All Microsoft.Extensions packages assembly bindings\n- ✅ All System.Web.WebPages assembly bindings\n\n**Result**: Manuscript upload through the Prophy API should now complete successfully!",
+          "status": "done",
+          "dependencies": [],
+          "parentTaskId": 27
         }
       ]
     }

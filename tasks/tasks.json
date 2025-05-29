@@ -1061,6 +1061,15 @@
           "status": "done",
           "dependencies": [],
           "parentTaskId": 27
+        },
+        {
+          "id": 36.9,
+          "title": "Fix System.Text.Json assembly binding redirect for manuscript upload",
+          "description": "Resolve System.Text.Json FileNotFoundException during manuscript upload by correcting assembly binding redirect version mismatch",
+          "details": "SYSTEM.TEXT.JSON ASSEMBLY BINDING MISMATCH RESOLVED:\n\n🔧 **System.Text.Json FileNotFoundException Fixed**:\n- **Error**: `System.Text.Json, Version=8.0.0.0` could not be found during Microsoft.Extensions.Logging.Console.AddConsole()\n- **Root Cause**: Binding redirect was pointing to wrong version (4.0.1.2 instead of 8.0.0.5)\n- **Discovery**: Used PowerShell reflection to check actual assembly version in packages directory\n- **Actual Assembly Version**: System.Text.Json, Version=8.0.0.5 (from NuGet package 8.0.5)\n\n✅ **Assembly Binding Correction Applied**:\n- **System.Text.Json**: Updated binding redirect from 4.0.1.2 → 8.0.0.5 (correct assembly version)\n\n🎯 **Context**: \nThe error occurred in ProphyService.CreateClient() when creating a logger with AddConsole(). Microsoft.Extensions.Logging.Console was trying to load System.Text.Json version 8.0.0.0 but the binding redirect was incorrectly pointing to an old version.\n\n**Status**: AspNet48.Sample manuscript upload should now work without System.Text.Json assembly loading exceptions!",
+          "status": "done",
+          "dependencies": [],
+          "parentTaskId": 27
         }
       ]
     }

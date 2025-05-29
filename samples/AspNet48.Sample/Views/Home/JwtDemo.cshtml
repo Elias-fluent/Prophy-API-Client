@@ -1,0 +1,189 @@
+@model AspNet48.Sample.Models.JwtDemoViewModel
+@{
+    ViewBag.Title = "JWT Demo";
+}
+
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-lg-8 mx-auto">
+            <div class="card">
+                <div class="card-header bg-warning text-dark">
+                    <h2 class="card-title mb-0">
+                        <i class="fas fa-key me-2"></i>
+                        JWT Authentication Demo
+                    </h2>
+                </div>
+                <div class="card-body">
+                    <p class="lead">Generate JWT tokens for seamless user authentication with the Prophy platform.</p>
+
+                    @if (Model.IsGenerated && !string.IsNullOrEmpty(Model.GeneratedUrl))
+                    {
+                        <div class="alert alert-success">
+                            <h5><i class="fas fa-check-circle me-2"></i>JWT Login URL Generated Successfully!</h5>
+                            <div class="mt-3">
+                                <label class="form-label"><strong>Generated Login URL:</strong></label>
+                                <div class="input-group">
+                                    <input type="text" class="form-control" id="generatedUrl" value="@Model.GeneratedUrl" readonly>
+                                    <button class="btn btn-outline-secondary" type="button" onclick="copyToClipboard('generatedUrl')">
+                                        <i class="fas fa-copy"></i> Copy
+                                    </button>
+                                </div>
+                                <small class="text-muted">This URL can be used to authenticate users directly into the Prophy platform.</small>
+                            </div>
+                            <div class="mt-3">
+                                <a href="@Model.GeneratedUrl" target="_blank" class="btn btn-primary">
+                                    <i class="fas fa-external-link-alt me-2"></i>Test Login URL
+                                </a>
+                            </div>
+                        </div>
+                    }
+
+                    @using (Html.BeginForm("GenerateJwt", "Home", FormMethod.Post, new { @class = "needs-validation", novalidate = "novalidate" }))
+                    {
+                        @Html.AntiForgeryToken()
+                        
+                        @if (!ViewData.ModelState.IsValid)
+                        {
+                            <div class="alert alert-danger">
+                                <h6><i class="fas fa-exclamation-triangle me-2"></i>Please correct the following errors:</h6>
+                                @Html.ValidationSummary(false, "", new { @class = "mb-0" })
+                            </div>
+                        }
+
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    @Html.LabelFor(m => m.Subject, new { @class = "form-label" })
+                                    @Html.TextBoxFor(m => m.Subject, new { @class = "form-control", placeholder = "Organization name", required = "required" })
+                                    @Html.ValidationMessageFor(m => m.Subject, "", new { @class = "invalid-feedback" })
+                                    <div class="form-text">The organization or subject name for the JWT token.</div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    @Html.LabelFor(m => m.Organization, new { @class = "form-label" })
+                                    @Html.TextBoxFor(m => m.Organization, new { @class = "form-control", placeholder = "org-code", required = "required" })
+                                    @Html.ValidationMessageFor(m => m.Organization, "", new { @class = "invalid-feedback" })
+                                    <div class="form-text">The organization code or identifier.</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    @Html.LabelFor(m => m.Email, new { @class = "form-label" })
+                                    @Html.TextBoxFor(m => m.Email, new { @class = "form-control", type = "email", placeholder = "user@example.com", required = "required" })
+                                    @Html.ValidationMessageFor(m => m.Email, "", new { @class = "invalid-feedback" })
+                                    <div class="form-text">The user's email address for authentication.</div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    @Html.LabelFor(m => m.Folder, new { @class = "form-label" })
+                                    @Html.TextBoxFor(m => m.Folder, new { @class = "form-control", placeholder = "Optional folder context" })
+                                    @Html.ValidationMessageFor(m => m.Folder, "", new { @class = "invalid-feedback" })
+                                    <div class="form-text">Optional folder or context for the login session.</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            @Html.LabelFor(m => m.OriginId, new { @class = "form-label" })
+                            @Html.TextBoxFor(m => m.OriginId, new { @class = "form-control", placeholder = "Optional origin ID for tracking" })
+                            @Html.ValidationMessageFor(m => m.OriginId, "", new { @class = "invalid-feedback" })
+                            <div class="form-text">Optional origin ID for tracking or manuscript context.</div>
+                        </div>
+
+                        <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                            <button type="submit" class="btn btn-warning btn-lg">
+                                <i class="fas fa-key me-2"></i>Generate JWT Login URL
+                            </button>
+                        </div>
+                    }
+
+                    <div class="mt-5">
+                        <h4><i class="fas fa-info-circle me-2"></i>About JWT Authentication</h4>
+                        <p>JSON Web Tokens (JWT) provide a secure way to authenticate users and pass information between systems. This demo shows how to generate JWT tokens for Prophy platform integration.</p>
+                        
+                        <div class="row mt-3">
+                            <div class="col-md-6">
+                                <h5>JWT Benefits:</h5>
+                                <ul>
+                                    <li><strong>Stateless:</strong> No server-side session storage required</li>
+                                    <li><strong>Secure:</strong> Cryptographically signed tokens</li>
+                                    <li><strong>Portable:</strong> Works across different domains</li>
+                                    <li><strong>Self-contained:</strong> Includes all necessary information</li>
+                                </ul>
+                            </div>
+                            <div class="col-md-6">
+                                <h5>Use Cases:</h5>
+                                <ul>
+                                    <li>Single Sign-On (SSO) integration</li>
+                                    <li>API authentication</li>
+                                    <li>Cross-domain authentication</li>
+                                    <li>Mobile app authentication</li>
+                                </ul>
+                            </div>
+                        </div>
+
+                        <div class="alert alert-info mt-3">
+                            <h6><i class="fas fa-shield-alt me-2"></i>Security Note</h6>
+                            <p class="mb-0">In production environments, ensure that:</p>
+                            <ul class="mb-0 mt-2">
+                                <li>JWT secret keys are stored securely and rotated regularly</li>
+                                <li>Tokens have appropriate expiration times</li>
+                                <li>HTTPS is used for all token transmission</li>
+                                <li>Token validation is performed on the server side</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function copyToClipboard(elementId) {
+    const element = document.getElementById(elementId);
+    element.select();
+    element.setSelectionRange(0, 99999); // For mobile devices
+    
+    try {
+        document.execCommand('copy');
+        
+        // Show feedback
+        const button = element.nextElementSibling;
+        const originalText = button.innerHTML;
+        button.innerHTML = '<i class="fas fa-check"></i> Copied!';
+        button.classList.remove('btn-outline-secondary');
+        button.classList.add('btn-success');
+        
+        setTimeout(() => {
+            button.innerHTML = originalText;
+            button.classList.remove('btn-success');
+            button.classList.add('btn-outline-secondary');
+        }, 2000);
+    } catch (err) {
+        console.error('Failed to copy text: ', err);
+    }
+}
+
+// Bootstrap form validation
+(function() {
+    'use strict';
+    window.addEventListener('load', function() {
+        var forms = document.getElementsByClassName('needs-validation');
+        var validation = Array.prototype.filter.call(forms, function(form) {
+            form.addEventListener('submit', function(event) {
+                if (form.checkValidity() === false) {
+                    event.preventDefault();
+                    event.stopPropagation();
+                }
+                form.classList.add('was-validated');
+            }, false);
+        });
+    }, false);
+})();
+</script> 

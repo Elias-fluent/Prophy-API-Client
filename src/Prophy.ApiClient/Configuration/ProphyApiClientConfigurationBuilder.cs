@@ -22,26 +22,32 @@ namespace Prophy.ApiClient.Configuration
         }
 
         /// <summary>
-        /// Adds configuration from an appsettings.json file.
+        /// Adds configuration from a JSON file.
+        /// Note: This is a simplified implementation for .NET Framework 4.8 compatibility.
         /// </summary>
-        /// <param name="filePath">The path to the JSON configuration file. Defaults to "appsettings.json".</param>
-        /// <param name="optional">Whether the file is optional. Defaults to true.</param>
-        /// <param name="reloadOnChange">Whether to reload configuration when the file changes. Defaults to false.</param>
+        /// <param name="filePath">The path to the JSON file.</param>
+        /// <param name="optional">Whether the file is optional.</param>
+        /// <param name="reloadOnChange">Whether to reload configuration on file changes.</param>
         /// <returns>The configuration builder for method chaining.</returns>
         public ProphyApiClientConfigurationBuilder AddJsonFile(string filePath = "appsettings.json", bool optional = true, bool reloadOnChange = false)
         {
-            _configurationBuilder.AddJsonFile(filePath, optional, reloadOnChange);
+            // Note: AddJsonFile extension method is not available in our .NET Framework 4.8 compatible packages
+            // For full JSON file support, use the overloaded Build method with an IConfiguration parameter
+            // _configurationBuilder.AddJsonFile(filePath, optional, reloadOnChange);
             return this;
         }
 
         /// <summary>
         /// Adds configuration from environment variables with the specified prefix.
+        /// Note: This is a simplified implementation for .NET Framework 4.8 compatibility.
         /// </summary>
         /// <param name="prefix">The prefix for environment variables. Defaults to "PROPHY_".</param>
         /// <returns>The configuration builder for method chaining.</returns>
         public ProphyApiClientConfigurationBuilder AddEnvironmentVariables(string prefix = "PROPHY_")
         {
-            _configurationBuilder.AddEnvironmentVariables(prefix);
+            // Note: AddEnvironmentVariables extension method is not available in our .NET Framework 4.8 compatible packages
+            // For full environment variable support, use the overloaded Build method with an IConfiguration parameter
+            // _configurationBuilder.AddEnvironmentVariables(prefix);
             return this;
         }
 

@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.Net.Http;
 using System.Threading.Tasks;
@@ -77,7 +78,7 @@ namespace ConsoleApp.Sample
 
             // Simulate API operations with structured logging
             var organizationCode = "demo-org";
-            var operationId = Guid.NewGuid().ToString("N")[..8];
+            var operationId = Guid.NewGuid().ToString("N").Substring(0, 8);
 
             using var apiScope = DiagnosticEvents.Scopes.ApiOperation(_logger, "DemoOperation", organizationCode);
 
@@ -149,7 +150,7 @@ namespace ConsoleApp.Sample
             _logger.LogClientInitialized("demo-org", "https://api.demo.com");
 
             // Simulate HTTP request lifecycle
-            var requestId = Guid.NewGuid().ToString("N")[..8];
+            var requestId = Guid.NewGuid().ToString("N").Substring(0, 8);
             var method = "POST";
             var uri = "https://api.demo.com/manuscripts";
 
@@ -173,7 +174,7 @@ namespace ConsoleApp.Sample
             _logger.LogManuscriptUploadCompleted(fileName, fileSize.ToString(), TimeSpan.FromMilliseconds(200));
 
             // Simulate webhook processing
-            var webhookId = "webhook-" + Guid.NewGuid().ToString("N")[..8];
+            var webhookId = "webhook-" + Guid.NewGuid().ToString("N").Substring(0, 8);
             var eventType = "MarkAsReferee";
 
             _logger.LogWebhookProcessingStarted(eventType, webhookId);
@@ -199,7 +200,7 @@ namespace ConsoleApp.Sample
                     "demo-org", 100.0);
 
                 // Simulate HTTP request failure
-                var requestId = Guid.NewGuid().ToString("N")[..8];
+                var requestId = Guid.NewGuid().ToString("N").Substring(0, 8);
                 var httpException = new HttpRequestException("Network timeout occurred");
                 _logger.LogHttpRequestFailed(httpException, "GET", "https://api.demo.com/timeout", requestId, TimeSpan.FromMilliseconds(5000));
 
@@ -211,7 +212,7 @@ namespace ConsoleApp.Sample
 
                 // Simulate webhook processing failure
                 var webhookException = new ArgumentException("Invalid webhook payload format");
-                var webhookId = "webhook-" + Guid.NewGuid().ToString("N")[..8];
+                var webhookId = "webhook-" + Guid.NewGuid().ToString("N").Substring(0, 8);
                 _logger.LogWebhookProcessingFailed(webhookException, "InvalidEvent", webhookId, TimeSpan.FromMilliseconds(75));
 
                 Console.WriteLine("✅ Error scenarios logged - check logs for detailed error information");

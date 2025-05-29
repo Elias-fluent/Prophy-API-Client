@@ -186,49 +186,41 @@ namespace Prophy.ApiClient.Models.Entities
         /// <summary>
         /// String/text data type.
         /// </summary>
-        [JsonPropertyName("string")]
         String,
 
         /// <summary>
         /// Numeric data type.
         /// </summary>
-        [JsonPropertyName("number")]
         Number,
 
         /// <summary>
         /// Date data type.
         /// </summary>
-        [JsonPropertyName("date")]
         Date,
 
         /// <summary>
         /// Boolean data type.
         /// </summary>
-        [JsonPropertyName("boolean")]
         Boolean,
 
         /// <summary>
         /// Single-option selection data type.
         /// </summary>
-        [JsonPropertyName("single-option")]
         SingleOption,
 
         /// <summary>
         /// Multi-option selection data type.
         /// </summary>
-        [JsonPropertyName("multi-option")]
         MultiOption,
 
         /// <summary>
         /// Array data type.
         /// </summary>
-        [JsonPropertyName("array")]
         Array,
 
         /// <summary>
         /// Object data type.
         /// </summary>
-        [JsonPropertyName("object")]
         Object
     }
 } 

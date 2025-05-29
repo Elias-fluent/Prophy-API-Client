@@ -2,102 +2,83 @@ using System;
 using System.Diagnostics;
 using System.Net;
 using System.Net.Http;
+using System.Net.Http.Headers;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
-using Polly;
 using Prophy.ApiClient.Diagnostics;
 using Prophy.ApiClient.Modules;
 
 namespace Prophy.ApiClient.Http
 {
     /// <summary>
-    /// Concrete implementation of IHttpClientWrapper that provides HTTP operations with resilience patterns and logging.
+    /// Wrapper for HttpClient that provides additional functionality and resilience.
     /// </summary>
-    public class HttpClientWrapper : IHttpClientWrapper
+    public class HttpClientWrapper : IHttpClientWrapper, IDisposable
     {
         private readonly HttpClient _httpClient;
         private readonly ILogger<HttpClientWrapper> _logger;
         private readonly IResilienceModule? _resilienceModule;
-
-        /// <summary>
-        /// Initializes a new instance of the HttpClientWrapper class.
-        /// </summary>
-        /// <param name="httpClient">The HttpClient instance to use for HTTP operations.</param>
-        /// <param name="logger">The logger instance for logging HTTP operations.</param>
-        public HttpClientWrapper(HttpClient httpClient, ILogger<HttpClientWrapper> logger)
-        {
-            _httpClient = httpClient ?? throw new ArgumentNullException(nameof(httpClient));
-            _logger = logger ?? throw new ArgumentNullException(nameof(logger));
-            _resilienceModule = null; // No resilience module - direct HTTP calls
-        }
+        private readonly bool _disposeHttpClient;
+        private bool _disposed;
 
         /// <summary>
         /// Initializes a new instance of the HttpClientWrapper class with resilience support.
         /// </summary>
-        /// <param name="httpClient">The HttpClient instance to use for HTTP operations.</param>
-        /// <param name="logger">The logger instance for logging HTTP operations.</param>
-        /// <param name="resilienceModule">The resilience module for rate limiting, circuit breaker, and retry policies.</param>
-        public HttpClientWrapper(HttpClient httpClient, ILogger<HttpClientWrapper> logger, IResilienceModule resilienceModule)
+        /// <param name="httpClient">The HttpClient instance to wrap.</param>
+        /// <param name="logger">The logger instance.</param>
+        /// <param name="resilienceModule">The resilience module for circuit breaker and retry patterns.</param>
+        /// <param name="disposeHttpClient">Whether to dispose the HttpClient when this wrapper is disposed.</param>
+        public HttpClientWrapper(HttpClient httpClient, ILogger<HttpClientWrapper> logger, IResilienceModule resilienceModule, bool disposeHttpClient = false)
         {
             _httpClient = httpClient ?? throw new ArgumentNullException(nameof(httpClient));
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
             _resilienceModule = resilienceModule ?? throw new ArgumentNullException(nameof(resilienceModule));
+            _disposeHttpClient = disposeHttpClient;
+
+            _logger.LogDebug("HttpClientWrapper initialized with resilience support");
         }
 
         /// <summary>
-        /// Executes an HTTP operation with resilience patterns if available, otherwise executes directly.
+        /// Initializes a new instance of the HttpClientWrapper class without resilience support (.NET Framework 4.8 compatible).
         /// </summary>
-        /// <param name="method">The HTTP method for logging and endpoint identification.</param>
-        /// <param name="requestUri">The request URI for endpoint identification.</param>
-        /// <param name="operation">The HTTP operation to execute.</param>
-        /// <param name="cancellationToken">The cancellation token.</param>
-        /// <returns>The HTTP response message.</returns>
-        private async Task<HttpResponseMessage> ExecuteWithResilienceAsync(string method, string requestUri, Func<CancellationToken, Task<HttpResponseMessage>> operation, CancellationToken cancellationToken)
+        /// <param name="httpClient">The HttpClient instance to wrap.</param>
+        /// <param name="logger">The logger instance.</param>
+        /// <param name="disposeHttpClient">Whether to dispose the HttpClient when this wrapper is disposed.</param>
+        public HttpClientWrapper(HttpClient httpClient, ILogger<HttpClientWrapper> logger, bool disposeHttpClient = false)
         {
-            if (_resilienceModule != null)
-            {
-                // Use endpoint-specific pipeline based on the request URI
-                var endpointName = GetEndpointName(method, requestUri);
-                return await _resilienceModule.ExecuteAsync(endpointName, operation, cancellationToken);
-            }
-            else
-            {
-                // Execute directly without resilience patterns
-                return await operation(cancellationToken);
-            }
+            _httpClient = httpClient ?? throw new ArgumentNullException(nameof(httpClient));
+            _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+            _resilienceModule = null;
+            _disposeHttpClient = disposeHttpClient;
+
+            _logger.LogDebug("HttpClientWrapper initialized without resilience support (.NET Framework 4.8 compatible)");
         }
 
-        /// <summary>
-        /// Gets a normalized endpoint name for resilience pipeline identification.
-        /// </summary>
-        /// <param name="method">The HTTP method.</param>
-        /// <param name="requestUri">The request URI.</param>
-        /// <returns>A normalized endpoint name.</returns>
-        private static string GetEndpointName(string method, string requestUri)
-        {
-            // Extract the path from the URI and normalize it for endpoint identification
-            var uri = requestUri.StartsWith("http") ? new Uri(requestUri) : new Uri($"https://example.com{requestUri}");
-            var path = uri.AbsolutePath.Trim('/');
-            
-            // Replace dynamic segments with placeholders for consistent endpoint naming
-            // e.g., /api/external/proposal/123 -> /api/external/proposal/{id}
-            path = System.Text.RegularExpressions.Regex.Replace(path, @"\d+", "{id}");
-            
-            return $"{method.ToUpperInvariant()}:{path}";
+        /// <inheritdoc />
+        public Uri? BaseAddress 
+        { 
+            get => _httpClient.BaseAddress; 
+            set => _httpClient.BaseAddress = value; 
         }
+
+        /// <inheritdoc />
+        public TimeSpan Timeout 
+        { 
+            get => _httpClient.Timeout; 
+            set => _httpClient.Timeout = value; 
+        }
+
+        /// <inheritdoc />
+        public HttpRequestHeaders DefaultRequestHeaders => _httpClient.DefaultRequestHeaders;
 
         /// <inheritdoc />
         public async Task<HttpResponseMessage> GetAsync(string requestUri, CancellationToken cancellationToken = default)
         {
             _logger.LogDebug("Sending GET request to: {RequestUri}", requestUri);
             
-            return await ExecuteWithResilienceAsync("GET", requestUri, async (ct) =>
-            {
-                var response = await _httpClient.GetAsync(requestUri, ct);
-                LogResponse(response, "GET", requestUri);
-                return response;
-            }, cancellationToken);
+            var request = new HttpRequestMessage(HttpMethod.Get, requestUri);
+            return await SendAsync(request, cancellationToken);
         }
 
         /// <inheritdoc />
@@ -105,12 +86,8 @@ namespace Prophy.ApiClient.Http
         {
             _logger.LogDebug("Sending GET request to: {RequestUri}", requestUri);
             
-            return await ExecuteWithResilienceAsync("GET", requestUri?.ToString() ?? "", async (ct) =>
-            {
-                var response = await _httpClient.GetAsync(requestUri, ct);
-                LogResponse(response, "GET", requestUri?.ToString());
-                return response;
-            }, cancellationToken);
+            var request = new HttpRequestMessage(HttpMethod.Get, requestUri);
+            return await SendAsync(request, cancellationToken);
         }
 
         /// <inheritdoc />
@@ -118,12 +95,8 @@ namespace Prophy.ApiClient.Http
         {
             _logger.LogDebug("Sending POST request to: {RequestUri}", requestUri);
             
-            return await ExecuteWithResilienceAsync("POST", requestUri, async (ct) =>
-            {
-                var response = await _httpClient.PostAsync(requestUri, content, ct);
-                LogResponse(response, "POST", requestUri);
-                return response;
-            }, cancellationToken);
+            var request = new HttpRequestMessage(HttpMethod.Post, requestUri) { Content = content };
+            return await SendAsync(request, cancellationToken);
         }
 
         /// <inheritdoc />
@@ -131,12 +104,8 @@ namespace Prophy.ApiClient.Http
         {
             _logger.LogDebug("Sending POST request to: {RequestUri}", requestUri);
             
-            return await ExecuteWithResilienceAsync("POST", requestUri?.ToString() ?? "", async (ct) =>
-            {
-                var response = await _httpClient.PostAsync(requestUri, content, ct);
-                LogResponse(response, "POST", requestUri?.ToString());
-                return response;
-            }, cancellationToken);
+            var request = new HttpRequestMessage(HttpMethod.Post, requestUri) { Content = content };
+            return await SendAsync(request, cancellationToken);
         }
 
         /// <inheritdoc />
@@ -144,12 +113,8 @@ namespace Prophy.ApiClient.Http
         {
             _logger.LogDebug("Sending PUT request to: {RequestUri}", requestUri);
             
-            return await ExecuteWithResilienceAsync("PUT", requestUri, async (ct) =>
-            {
-                var response = await _httpClient.PutAsync(requestUri, content, ct);
-                LogResponse(response, "PUT", requestUri);
-                return response;
-            }, cancellationToken);
+            var request = new HttpRequestMessage(HttpMethod.Put, requestUri) { Content = content };
+            return await SendAsync(request, cancellationToken);
         }
 
         /// <inheritdoc />
@@ -157,12 +122,8 @@ namespace Prophy.ApiClient.Http
         {
             _logger.LogDebug("Sending PUT request to: {RequestUri}", requestUri);
             
-            return await ExecuteWithResilienceAsync("PUT", requestUri?.ToString() ?? "", async (ct) =>
-            {
-                var response = await _httpClient.PutAsync(requestUri, content, ct);
-                LogResponse(response, "PUT", requestUri?.ToString());
-                return response;
-            }, cancellationToken);
+            var request = new HttpRequestMessage(HttpMethod.Put, requestUri) { Content = content };
+            return await SendAsync(request, cancellationToken);
         }
 
         /// <inheritdoc />
@@ -170,12 +131,8 @@ namespace Prophy.ApiClient.Http
         {
             _logger.LogDebug("Sending DELETE request to: {RequestUri}", requestUri);
             
-            return await ExecuteWithResilienceAsync("DELETE", requestUri, async (ct) =>
-            {
-                var response = await _httpClient.DeleteAsync(requestUri, ct);
-                LogResponse(response, "DELETE", requestUri);
-                return response;
-            }, cancellationToken);
+            var request = new HttpRequestMessage(HttpMethod.Delete, requestUri);
+            return await SendAsync(request, cancellationToken);
         }
 
         /// <inheritdoc />
@@ -183,47 +140,141 @@ namespace Prophy.ApiClient.Http
         {
             _logger.LogDebug("Sending DELETE request to: {RequestUri}", requestUri);
             
-            return await ExecuteWithResilienceAsync("DELETE", requestUri?.ToString() ?? "", async (ct) =>
-            {
-                var response = await _httpClient.DeleteAsync(requestUri, ct);
-                LogResponse(response, "DELETE", requestUri?.ToString());
-                return response;
-            }, cancellationToken);
+            var request = new HttpRequestMessage(HttpMethod.Delete, requestUri);
+            return await SendAsync(request, cancellationToken);
         }
 
         /// <inheritdoc />
         public async Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken = default)
         {
-            _logger.LogDebug("Sending {Method} request to: {RequestUri}", request.Method, request.RequestUri);
-            
-            return await ExecuteWithResilienceAsync(request.Method.ToString(), request.RequestUri?.ToString() ?? "", async (ct) =>
+            if (request == null)
+                throw new ArgumentNullException(nameof(request));
+
+            ThrowIfDisposed();
+
+            try
             {
-                var response = await _httpClient.SendAsync(request, ct);
-                LogResponse(response, request.Method.ToString(), request.RequestUri?.ToString());
+                _logger.LogDebug("Sending HTTP {Method} request to {Uri}", request.Method, request.RequestUri);
+
+                HttpResponseMessage response;
+
+                // Use resilience module if available, otherwise send directly
+                if (_resilienceModule != null)
+                {
+                    response = await _resilienceModule.ExecuteAsync(async (ct) =>
+                    {
+                        return await _httpClient.SendAsync(request, ct);
+                    }, cancellationToken);
+                }
+                else
+                {
+                    response = await _httpClient.SendAsync(request, cancellationToken);
+                }
+
+                _logger.LogDebug("Received HTTP {StatusCode} response from {Uri}", 
+                    response.StatusCode, request.RequestUri);
+
                 return response;
-            }, cancellationToken);
+            }
+            catch (TaskCanceledException ex) when (ex.CancellationToken.IsCancellationRequested)
+            {
+                _logger.LogWarning("HTTP request to {Uri} was cancelled", request.RequestUri);
+                throw;
+            }
+            catch (TaskCanceledException ex)
+            {
+                _logger.LogError(ex, "HTTP request to {Uri} timed out", request.RequestUri);
+                throw;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "HTTP request to {Uri} failed with unexpected error", request.RequestUri);
+                throw;
+            }
         }
 
-        private void LogResponse(HttpResponseMessage response, string method, string? requestUri)
+        /// <inheritdoc />
+        public async Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, HttpCompletionOption completionOption, CancellationToken cancellationToken = default)
         {
-            var statusCode = (int)response.StatusCode;
-            
-            if (response.IsSuccessStatusCode)
-            {
-                _logger.LogDebug("HTTP {Method} request to {RequestUri} completed successfully. Status: {StatusCode}", 
-                    method, requestUri, response.StatusCode);
-            }
-            else
-            {
-                _logger.LogWarning("HTTP {Method} request to {RequestUri} failed. Status: {StatusCode}, Reason: {ReasonPhrase}", 
-                    method, requestUri, response.StatusCode, response.ReasonPhrase);
-            }
+            if (request == null)
+                throw new ArgumentNullException(nameof(request));
 
-            // Record metrics
-            DiagnosticEvents.Metrics.IncrementCounter($"http.requests.{method.ToLowerInvariant()}.{statusCode}");
-            DiagnosticEvents.Metrics.IncrementCounter($"http.requests.{method.ToLowerInvariant()}.{(response.IsSuccessStatusCode ? "success" : "failure")}");
+            ThrowIfDisposed();
+
+            try
+            {
+                _logger.LogDebug("Sending HTTP {Method} request to {Uri} with completion option {CompletionOption}", 
+                    request.Method, request.RequestUri, completionOption);
+
+                HttpResponseMessage response;
+
+                // Use resilience module if available, otherwise send directly
+                if (_resilienceModule != null)
+                {
+                    response = await _resilienceModule.ExecuteAsync(async (ct) =>
+                    {
+                        return await _httpClient.SendAsync(request, completionOption, ct);
+                    }, cancellationToken);
+                }
+                else
+                {
+                    response = await _httpClient.SendAsync(request, completionOption, cancellationToken);
+                }
+
+                _logger.LogDebug("Received HTTP {StatusCode} response from {Uri}", 
+                    response.StatusCode, request.RequestUri);
+
+                return response;
+            }
+            catch (TaskCanceledException ex) when (ex.CancellationToken.IsCancellationRequested)
+            {
+                _logger.LogWarning("HTTP request to {Uri} was cancelled", request.RequestUri);
+                throw;
+            }
+            catch (TaskCanceledException ex)
+            {
+                _logger.LogError(ex, "HTTP request to {Uri} timed out", request.RequestUri);
+                throw;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "HTTP request to {Uri} failed with unexpected error", request.RequestUri);
+                throw;
+            }
         }
 
+        private void ThrowIfDisposed()
+        {
+            if (_disposed)
+                throw new ObjectDisposedException(nameof(HttpClientWrapper));
+        }
 
+        /// <summary>
+        /// Disposes the HTTP client wrapper and optionally the underlying HttpClient.
+        /// </summary>
+        public void Dispose()
+        {
+            Dispose(true);
+            GC.SuppressFinalize(this);
+        }
+
+        /// <summary>
+        /// Disposes the HTTP client wrapper and optionally the underlying HttpClient.
+        /// </summary>
+        /// <param name="disposing">True if disposing managed resources.</param>
+        protected virtual void Dispose(bool disposing)
+        {
+            if (!_disposed && disposing)
+            {
+                if (_disposeHttpClient)
+                {
+                    _httpClient?.Dispose();
+                }
+
+                _disposed = true;
+                
+                _logger.LogDebug("HttpClientWrapper disposed");
+            }
+        }
     }
 } 

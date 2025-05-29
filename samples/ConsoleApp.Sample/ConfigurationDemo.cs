@@ -56,7 +56,7 @@ namespace ConsoleApp.Sample
                     .Build();
 
                 logger.LogInformation("✅ Configuration loaded from appsettings.json");
-                logger.LogInformation($"   API Key: {configuration.ApiKey?[..10]}...");
+                logger.LogInformation($"   API Key: {configuration.ApiKey?.Substring(0, Math.Min(10, configuration.ApiKey.Length))}...");
                 logger.LogInformation($"   Organization: {configuration.OrganizationCode}");
                 logger.LogInformation($"   Base URL: {configuration.BaseUrl}");
                 logger.LogInformation($"   Timeout: {configuration.TimeoutSeconds} seconds");
@@ -135,7 +135,7 @@ namespace ConsoleApp.Sample
 
                 logger.LogInformation("✅ Configuration built from multiple sources");
                 logger.LogInformation("   Sources: appsettings.json + environment variables + in-code values");
-                logger.LogInformation($"   API Key: {configuration.ApiKey?[..10]}... (from JSON)");
+                logger.LogInformation($"   API Key: {configuration.ApiKey?.Substring(0, Math.Min(10, configuration.ApiKey.Length))}... (from JSON)");
                 logger.LogInformation($"   Organization: {configuration.OrganizationCode} (from JSON)");
                 logger.LogInformation($"   Timeout: {configuration.TimeoutSeconds} seconds (from code - overridden)");
                 logger.LogInformation($"   Detailed Logging: {configuration.EnableDetailedLogging} (from code - overridden)");
@@ -209,7 +209,7 @@ namespace ConsoleApp.Sample
                 }
                 catch (ArgumentException ex)
                 {
-                    logger.LogInformation($"✅ Client creation correctly rejected invalid configuration: {ex.Message[..100]}...");
+                    logger.LogInformation($"✅ Client creation correctly rejected invalid configuration: {ex.Message.Substring(0, Math.Min(100, ex.Message.Length))}...");
                 }
             }
             catch (Exception ex)

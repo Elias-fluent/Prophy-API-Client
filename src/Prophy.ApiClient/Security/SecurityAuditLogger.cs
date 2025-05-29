@@ -200,7 +200,7 @@ namespace Prophy.ApiClient.Security
             // Set common properties
             auditEvent.Timestamp = DateTimeOffset.UtcNow;
             auditEvent.InstanceId = _instanceId;
-            auditEvent.CorrelationId = System.Diagnostics.Activity.Current?.Id ?? Guid.NewGuid().ToString();
+            auditEvent.CorrelationId = Guid.NewGuid().ToString();
 
             // Add integrity hash if enabled
             if (_options.EnableIntegrityCheck)

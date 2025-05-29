@@ -15,10 +15,8 @@ namespace Prophy.ApiClient.Diagnostics
         /// </summary>
         public const string ActivitySourceName = "Prophy.ApiClient";
 
-        /// <summary>
-        /// The activity source for creating activities.
-        /// </summary>
-        public static readonly ActivitySource ActivitySource = new ActivitySource(ActivitySourceName);
+        // Note: ActivitySource is not available in .NET Framework 4.8 compatible packages
+        // For .NET Framework 4.8 compatibility, we use simple diagnostic names instead
 
         /// <summary>
         /// Event IDs for structured logging.

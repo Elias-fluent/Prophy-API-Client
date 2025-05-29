@@ -1,7 +1,11 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Threading.Tasks;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 using Prophy.ApiClient;
 using Prophy.ApiClient.Configuration;
 using Prophy.ApiClient.Models.Requests;
@@ -56,7 +60,7 @@ namespace ConsoleApp.Sample
                 Console.WriteLine();
 
                 Console.WriteLine("🔍 Debug: Request details:");
-                Console.WriteLine($"   API Key: {config.ApiKey[..10]}...");
+                Console.WriteLine($"   API Key: {config.ApiKey.Substring(0, Math.Min(10, config.ApiKey.Length))}...");
                 Console.WriteLine($"   Organization: {config.OrganizationCode}");
                 Console.WriteLine($"   Base URL: {config.BaseUrl}");
                 Console.WriteLine();

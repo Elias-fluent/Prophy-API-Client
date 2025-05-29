@@ -1,0 +1,322 @@
+@model AspNet48.Sample.Models.ManuscriptResultsViewModel
+@{
+    ViewBag.Title = "Manuscript Analysis Results";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<div class="container py-5">
+    <div class="row">
+        <div class="col-12">
+            <div class="text-center mb-5">
+                <h2 class="display-6 mb-3">
+                    <i class="fas fa-chart-line text-success me-2"></i>
+                    Manuscript Analysis Results
+                </h2>
+                <p class="text-muted">
+                    Origin ID: <code>@Model.OriginId</code>
+                </p>
+            </div>
+
+            @if (!string.IsNullOrEmpty(Model.GeneralError))
+            {
+                <div class="alert alert-danger" role="alert">
+                    <i class="fas fa-exclamation-triangle me-2"></i>
+                    <strong>Error:</strong> @Model.GeneralError
+                </div>
+            }
+
+            @if (!Model.HasAnyData && !Model.HasAnyErrors)
+            {
+                <div class="alert alert-warning text-center" role="alert">
+                    <i class="fas fa-spinner fa-spin me-2"></i>
+                    <strong>Processing...</strong> Your manuscript is being analyzed. Please wait...
+                </div>
+            }
+        </div>
+    </div>
+
+    <div class="row g-4">
+        <!-- Manuscript Analysis -->
+        <div class="col-lg-12">
+            <div class="card shadow">
+                <div class="card-header bg-info text-white">
+                    <h5 class="mb-0">
+                        <i class="fas fa-microscope me-2"></i>Manuscript Analysis
+                    </h5>
+                </div>
+                <div class="card-body">
+                    @if (Model.HasAnalysis && Model.Analysis != null)
+                    {
+                        <div class="api-response">
+                            <h6><i class="fas fa-check-circle text-success me-2"></i>Analysis Complete</h6>
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <p><strong>Status:</strong> 
+                                        <span class="status-indicator status-success">Analyzed</span>
+                                    </p>
+                                    <p><strong>Processing Time:</strong> @(Model.Analysis.ProcessingTime ?? "Unknown")</p>
+                                    <p><strong>Document Type:</strong> @(Model.Analysis.DocumentType ?? "Unknown")</p>
+                                </div>
+                                <div class="col-md-6">
+                                    <p><strong>Word Count:</strong> @(Model.Analysis.WordCount?.ToString("N0") ?? "Unknown")</p>
+                                    <p><strong>Page Count:</strong> @(Model.Analysis.PageCount?.ToString() ?? "Unknown")</p>
+                                    <p><strong>Language:</strong> @(Model.Analysis.Language ?? "Unknown")</p>
+                                </div>
+                            </div>
+                            
+                            @if (!string.IsNullOrEmpty(Model.Analysis.Summary))
+                            {
+                                <div class="mt-3">
+                                    <h6>Summary:</h6>
+                                    <p class="text-muted">@Model.Analysis.Summary</p>
+                                </div>
+                            }
+                        </div>
+                    }
+                    else if (!string.IsNullOrEmpty(Model.AnalysisError))
+                    {
+                        <div class="alert alert-warning" role="alert">
+                            <i class="fas fa-exclamation-triangle me-2"></i>
+                            <strong>Analysis Error:</strong> @Model.AnalysisError
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="text-center text-muted">
+                            <i class="fas fa-spinner fa-spin me-2"></i>
+                            Analysis in progress...
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+
+        <!-- Referee Candidates -->
+        <div class="col-lg-6">
+            <div class="card shadow h-100">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">
+                        <i class="fas fa-user-tie me-2"></i>Referee Candidates
+                    </h5>
+                </div>
+                <div class="card-body">
+                    @if (Model.HasRefereeCandidates && Model.RefereeCandidates?.Candidates != null && Model.RefereeCandidates.Candidates.Any())
+                    {
+                        <p class="mb-3">
+                            <i class="fas fa-info-circle me-1"></i>
+                            Found <strong>@Model.RefereeCandidates.Candidates.Count</strong> referee candidates
+                        </p>
+                        
+                        <div class="referee-list">
+                            @foreach (var candidate in Model.RefereeCandidates.Candidates.Take(5))
+                            {
+                                <div class="referee-item mb-3 p-3 border rounded">
+                                    <div class="d-flex justify-content-between align-items-start">
+                                        <div class="flex-grow-1">
+                                            <h6 class="mb-1">@(candidate.Name ?? "Unknown Name")</h6>
+                                            <p class="text-muted small mb-1">
+                                                <i class="fas fa-university me-1"></i>
+                                                @(candidate.Affiliation ?? "Unknown Affiliation")
+                                            </p>
+                                            @if (!string.IsNullOrEmpty(candidate.Email))
+                                            {
+                                                <p class="text-muted small mb-1">
+                                                    <i class="fas fa-envelope me-1"></i>
+                                                    @candidate.Email
+                                                </p>
+                                            }
+                                            @if (candidate.ExpertiseAreas != null && candidate.ExpertiseAreas.Any())
+                                            {
+                                                <p class="small mb-1">
+                                                    <i class="fas fa-tags me-1"></i>
+                                                    @string.Join(", ", candidate.ExpertiseAreas.Take(3))
+                                                </p>
+                                            }
+                                        </div>
+                                        <div class="text-end">
+                                            @if (candidate.RelevanceScore.HasValue)
+                                            {
+                                                <span class="badge bg-primary">
+                                                    Score: @candidate.RelevanceScore.Value.ToString("F1")
+                                                </span>
+                                            }
+                                            @if (candidate.HIndex.HasValue)
+                                            {
+                                                <div class="small text-muted mt-1">
+                                                    H-index: @candidate.HIndex.Value
+                                                </div>
+                                            }
+                                        </div>
+                                    </div>
+                                </div>
+                            }
+                        </div>
+                        
+                        @if (Model.RefereeCandidates.Candidates.Count > 5)
+                        {
+                            <div class="text-center">
+                                <button class="btn btn-outline-primary btn-sm" onclick="loadMoreReferees()">
+                                    <i class="fas fa-plus me-1"></i>
+                                    Load More (@(Model.RefereeCandidates.Candidates.Count - 5) remaining)
+                                </button>
+                            </div>
+                        }
+                    }
+                    else if (!string.IsNullOrEmpty(Model.RefereeCandidatesError))
+                    {
+                        <div class="alert alert-warning" role="alert">
+                            <i class="fas fa-exclamation-triangle me-2"></i>
+                            <strong>Referee Error:</strong> @Model.RefereeCandidatesError
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="text-center text-muted">
+                            <i class="fas fa-spinner fa-spin me-2"></i>
+                            Loading referee candidates...
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+
+        <!-- Journal Recommendations -->
+        <div class="col-lg-6">
+            <div class="card shadow h-100">
+                <div class="card-header bg-success text-white">
+                    <h5 class="mb-0">
+                        <i class="fas fa-journal-whills me-2"></i>Journal Recommendations
+                    </h5>
+                </div>
+                <div class="card-body">
+                    @if (Model.HasJournalRecommendations && Model.JournalRecommendations?.Recommendations != null && Model.JournalRecommendations.Recommendations.Any())
+                    {
+                        <p class="mb-3">
+                            <i class="fas fa-info-circle me-1"></i>
+                            Found <strong>@Model.JournalRecommendations.Recommendations.Count</strong> journal recommendations
+                        </p>
+                        
+                        <div class="journal-list">
+                            @foreach (var journal in Model.JournalRecommendations.Recommendations.Take(5))
+                            {
+                                <div class="journal-item mb-3 p-3 border rounded">
+                                    <div class="d-flex justify-content-between align-items-start">
+                                        <div class="flex-grow-1">
+                                            <h6 class="mb-1">@(journal.Title ?? "Unknown Journal")</h6>
+                                            <p class="text-muted small mb-1">
+                                                <i class="fas fa-building me-1"></i>
+                                                @(journal.Publisher ?? "Unknown Publisher")
+                                            </p>
+                                            @if (!string.IsNullOrEmpty(journal.IssN))
+                                            {
+                                                <p class="text-muted small mb-1">
+                                                    <i class="fas fa-barcode me-1"></i>
+                                                    ISSN: @journal.IssN
+                                                </p>
+                                            }
+                                            @if (journal.ImpactFactor.HasValue)
+                                            {
+                                                <p class="small mb-1">
+                                                    <i class="fas fa-chart-line me-1"></i>
+                                                    Impact Factor: @journal.ImpactFactor.Value.ToString("F2")
+                                                </p>
+                                            }
+                                        </div>
+                                        <div class="text-end">
+                                            @if (journal.RelevanceScore.HasValue)
+                                            {
+                                                <span class="badge bg-success">
+                                                    Score: @journal.RelevanceScore.Value.ToString("F1")
+                                                </span>
+                                            }
+                                        </div>
+                                    </div>
+                                </div>
+                            }
+                        </div>
+                        
+                        @if (Model.JournalRecommendations.Recommendations.Count > 5)
+                        {
+                            <div class="text-center">
+                                <button class="btn btn-outline-success btn-sm" onclick="loadMoreJournals()">
+                                    <i class="fas fa-plus me-1"></i>
+                                    Load More (@(Model.JournalRecommendations.Recommendations.Count - 5) remaining)
+                                </button>
+                            </div>
+                        }
+                    }
+                    else if (!string.IsNullOrEmpty(Model.JournalRecommendationsError))
+                    {
+                        <div class="alert alert-warning" role="alert">
+                            <i class="fas fa-exclamation-triangle me-2"></i>
+                            <strong>Journal Error:</strong> @Model.JournalRecommendationsError
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="text-center text-muted">
+                            <i class="fas fa-spinner fa-spin me-2"></i>
+                            Loading journal recommendations...
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Action Buttons -->
+    <div class="row mt-5">
+        <div class="col-12 text-center">
+            <a href="@Url.Action("Upload", "Manuscript")" class="btn btn-prophy me-3">
+                <i class="fas fa-upload me-2"></i>Upload Another Manuscript
+            </a>
+            <a href="@Url.Action("Index", "Home")" class="btn btn-outline-secondary">
+                <i class="fas fa-home me-2"></i>Back to Home
+            </a>
+        </div>
+    </div>
+</div>
+
+@section scripts {
+    <script>
+        function loadMoreReferees() {
+            // Implementation for loading more referee candidates
+            $.post('@Url.Action("GetRefereeCandidates", "Manuscript")', 
+                { originId: '@Model.OriginId', count: 20 },
+                function(data) {
+                    if (data.success) {
+                        // Update UI with more referee candidates
+                        console.log('More referee candidates loaded:', data.data);
+                    } else {
+                        alert('Error loading more referee candidates: ' + data.error);
+                    }
+                }
+            );
+        }
+
+        function loadMoreJournals() {
+            // Implementation for loading more journal recommendations
+            $.post('@Url.Action("GetJournalRecommendations", "Manuscript")', 
+                { originId: '@Model.OriginId', count: 20 },
+                function(data) {
+                    if (data.success) {
+                        // Update UI with more journal recommendations
+                        console.log('More journal recommendations loaded:', data.data);
+                    } else {
+                        alert('Error loading more journal recommendations: ' + data.error);
+                    }
+                }
+            );
+        }
+
+        // Auto-refresh results if processing is still ongoing
+        @if (!Model.HasAnyData && !Model.HasAnyErrors)
+        {
+            <text>
+            setTimeout(function() {
+                location.reload();
+            }, 5000); // Refresh every 5 seconds
+            </text>
+        }
+    </script>
+} 

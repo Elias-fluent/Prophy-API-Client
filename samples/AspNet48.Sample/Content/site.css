@@ -1,0 +1,96 @@
+/* Custom styles for Prophy API Client Sample Application */
+
+body {
+    padding-top: 50px;
+    padding-bottom: 20px;
+}
+
+/* Set padding to keep content from hitting the edges */
+.body-content {
+    padding-left: 15px;
+    padding-right: 15px;
+}
+
+/* Override the default bootstrap behavior where horizontal description lists 
+   will truncate terms that are too long to fit in the left column 
+*/
+.dl-horizontal dt {
+    white-space: normal;
+}
+
+/* Custom styles for the Prophy API demo */
+.prophy-demo {
+    margin-top: 20px;
+}
+
+.manuscript-upload-form {
+    background-color: #f8f9fa;
+    padding: 20px;
+    border-radius: 5px;
+    margin-bottom: 20px;
+}
+
+.results-panel {
+    background-color: #fff;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+    padding: 15px;
+    margin-bottom: 20px;
+}
+
+.referee-candidate {
+    border-bottom: 1px solid #eee;
+    padding: 10px 0;
+}
+
+.referee-candidate:last-child {
+    border-bottom: none;
+}
+
+.journal-recommendation {
+    border-left: 4px solid #007bff;
+    padding-left: 15px;
+    margin-bottom: 15px;
+}
+
+.error-message {
+    color: #dc3545;
+    font-weight: bold;
+}
+
+.success-message {
+    color: #28a745;
+    font-weight: bold;
+}
+
+.api-key-notice {
+    background-color: #fff3cd;
+    border: 1px solid #ffeaa7;
+    color: #856404;
+    padding: 15px;
+    border-radius: 5px;
+    margin-bottom: 20px;
+}
+
+.feature-demo {
+    border: 1px solid #ddd;
+    border-radius: 5px;
+    padding: 20px;
+    margin-bottom: 30px;
+}
+
+.feature-demo h3 {
+    color: #007bff;
+    margin-bottom: 15px;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .body-content {
+        padding: 10px;
+    }
+    
+    .manuscript-upload-form {
+        padding: 15px;
+    }
+} 

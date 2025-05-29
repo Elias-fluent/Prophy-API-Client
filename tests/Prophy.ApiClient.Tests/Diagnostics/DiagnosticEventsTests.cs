@@ -21,7 +21,8 @@ namespace Prophy.ApiClient.Tests.Diagnostics
         {
             // Assert
             Assert.Equal("Prophy.ApiClient", DiagnosticEvents.ActivitySourceName);
-            Assert.Equal("Prophy.ApiClient", DiagnosticEvents.ActivitySource.Name);
+            // Note: ActivitySource property is not available in .NET Standard 2.0/.NET Framework 4.8
+            // We only test the ActivitySourceName constant
         }
 
         [Fact]

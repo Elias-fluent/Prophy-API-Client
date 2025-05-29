@@ -119,12 +119,12 @@ namespace Prophy.ApiClient
             _authenticator = new ApiKeyAuthenticator(configuration.ApiKey!, authenticatorLogger);
             _authenticator.SetOrganizationCode(configuration.OrganizationCode!);
 
-            // Initialize resilience module first
+            // Initialize resilience module lazily (optional for .NET Framework 4.8 compatibility)
             _resilience = new Lazy<IResilienceModule>(() => CreateResilienceModule());
 
-            // Create HTTP client wrapper with resilience support
+            // Create HTTP client wrapper without resilience for .NET Framework 4.8 compatibility
             var httpClientLogger = Microsoft.Extensions.Logging.Abstractions.NullLogger<HttpClientWrapper>.Instance;
-            _httpClient = new HttpClientWrapper(httpClient, httpClientLogger, _resilience.Value);
+            _httpClient = new HttpClientWrapper(httpClient, httpClientLogger, true);
 
             // Initialize API modules
             _manuscripts = new Lazy<IManuscriptModule>(() => CreateManuscriptModule());
@@ -133,7 +133,7 @@ namespace Prophy.ApiClient
             _journals = new Lazy<IJournalRecommendationModule>(() => CreateJournalRecommendationModule());
             _authorGroups = new Lazy<IAuthorGroupModule>(() => CreateAuthorGroupModule());
 
-            _logger.LogInformation("ProphyApiClient initialized for organization: {OrganizationCode}, Base URL: {BaseUrl}", 
+            _logger.LogInformation("ProphyApiClient initialized for organization: {OrganizationCode}, Base URL: {BaseUrl} (.NET Framework 4.8 compatible mode)", 
                 OrganizationCode, BaseUrl);
         }
 
@@ -180,12 +180,12 @@ namespace Prophy.ApiClient
             _authenticator = new ApiKeyAuthenticator(configuration.ApiKey!, authenticatorLogger);
             _authenticator.SetOrganizationCode(configuration.OrganizationCode!);
 
-            // Initialize resilience module first
+            // Initialize resilience module lazily (optional for .NET Framework 4.8 compatibility)
             _resilience = new Lazy<IResilienceModule>(() => CreateResilienceModule());
 
-            // Create HTTP client wrapper with resilience support
+            // Create HTTP client wrapper without resilience for .NET Framework 4.8 compatibility
             var httpClientLogger = Microsoft.Extensions.Logging.Abstractions.NullLogger<HttpClientWrapper>.Instance;
-            _httpClient = new HttpClientWrapper(httpClient, httpClientLogger, _resilience.Value);
+            _httpClient = new HttpClientWrapper(httpClient, httpClientLogger, disposeHttpClient);
 
             // Initialize API modules
             _manuscripts = new Lazy<IManuscriptModule>(() => CreateManuscriptModule());
@@ -194,12 +194,12 @@ namespace Prophy.ApiClient
             _journals = new Lazy<IJournalRecommendationModule>(() => CreateJournalRecommendationModule());
             _authorGroups = new Lazy<IAuthorGroupModule>(() => CreateAuthorGroupModule());
 
-            _logger.LogInformation("ProphyApiClient initialized for organization: {OrganizationCode}, Base URL: {BaseUrl}", 
+            _logger.LogInformation("ProphyApiClient initialized for organization: {OrganizationCode}, Base URL: {BaseUrl} (.NET Framework 4.8 compatible mode)", 
                 OrganizationCode, BaseUrl);
         }
 
         /// <summary>
-        /// Initializes a new instance of the ProphyApiClient class with a custom HttpClient.
+        /// Initializes a new instance of the ProphyApiClient class with the specified API key, organization code, and HttpClient.
         /// </summary>
         /// <param name="apiKey">The API key for authentication.</param>
         /// <param name="organizationCode">The organization code associated with the API key.</param>
@@ -210,19 +210,32 @@ namespace Prophy.ApiClient
         {
             if (string.IsNullOrWhiteSpace(apiKey))
                 throw new ArgumentException("API key cannot be null or empty.", nameof(apiKey));
-            
+
             if (string.IsNullOrWhiteSpace(organizationCode))
                 throw new ArgumentException("Organization code cannot be null or empty.", nameof(organizationCode));
+
+            if (httpClient == null)
+                throw new ArgumentNullException(nameof(httpClient));
 
             _logger = logger ?? Microsoft.Extensions.Logging.Abstractions.NullLogger<ProphyApiClient>.Instance;
             _disposeHttpClient = disposeHttpClient;
             OrganizationCode = organizationCode;
 
-            // Set base URL
-            BaseUrl = httpClient.BaseAddress ?? new Uri("https://www.prophy.ai/api/");
+            // Set base URL if not already set
             if (httpClient.BaseAddress == null)
             {
-                httpClient.BaseAddress = BaseUrl;
+                httpClient.BaseAddress = new Uri("https://www.prophy.ai/api/");
+            }
+            BaseUrl = httpClient.BaseAddress;
+
+            // Set default headers if not already set
+            if (!httpClient.DefaultRequestHeaders.Contains("User-Agent"))
+            {
+                httpClient.DefaultRequestHeaders.Add("User-Agent", ProphyApiClientConfiguration.DefaultUserAgent);
+            }
+            if (!httpClient.DefaultRequestHeaders.Contains("Accept"))
+            {
+                httpClient.DefaultRequestHeaders.Add("Accept", "application/json");
             }
 
             // Create authenticator
@@ -230,12 +243,12 @@ namespace Prophy.ApiClient
             _authenticator = new ApiKeyAuthenticator(apiKey, authenticatorLogger);
             _authenticator.SetOrganizationCode(organizationCode);
 
-            // Initialize resilience module first
+            // Initialize resilience module lazily (optional for .NET Framework 4.8 compatibility)
             _resilience = new Lazy<IResilienceModule>(() => CreateResilienceModule());
 
-            // Create HTTP client wrapper with resilience support
+            // Create HTTP client wrapper without resilience for .NET Framework 4.8 compatibility
             var httpClientLogger = Microsoft.Extensions.Logging.Abstractions.NullLogger<HttpClientWrapper>.Instance;
-            _httpClient = new HttpClientWrapper(httpClient, httpClientLogger, _resilience.Value);
+            _httpClient = new HttpClientWrapper(httpClient, httpClientLogger, disposeHttpClient);
 
             // Initialize API modules
             _manuscripts = new Lazy<IManuscriptModule>(() => CreateManuscriptModule());
@@ -244,8 +257,8 @@ namespace Prophy.ApiClient
             _journals = new Lazy<IJournalRecommendationModule>(() => CreateJournalRecommendationModule());
             _authorGroups = new Lazy<IAuthorGroupModule>(() => CreateAuthorGroupModule());
 
-            _logger.LogInformation("ProphyApiClient initialized for organization: {OrganizationCode}, Base URL: {BaseUrl}", 
-                organizationCode, BaseUrl);
+            _logger.LogInformation("ProphyApiClient initialized for organization: {OrganizationCode}, Base URL: {BaseUrl} (.NET Framework 4.8 compatible mode)", 
+                OrganizationCode, BaseUrl);
         }
 
         /// <summary>

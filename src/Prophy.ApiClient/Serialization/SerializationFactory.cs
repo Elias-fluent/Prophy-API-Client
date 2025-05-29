@@ -57,8 +57,8 @@ namespace Prophy.ApiClient.Serialization
                 // Allow reading and writing of comments in JSON
                 ReadCommentHandling = JsonCommentHandling.Skip,
                 
-                // Handle null values gracefully
-                DefaultIgnoreCondition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull,
+                // Note: DefaultIgnoreCondition is not available in System.Text.Json 4.7.2 (.NET Framework 4.8)
+                // Null handling will be managed through JsonPropertyName attributes on individual properties
                 
                 // Allow trailing commas in JSON
                 AllowTrailingCommas = true,

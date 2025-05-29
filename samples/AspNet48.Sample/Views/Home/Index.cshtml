@@ -1,0 +1,257 @@
+@{
+    ViewBag.Title = "Home";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<!-- Hero Section -->
+<section class="hero-section">
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-8 mx-auto text-center">
+                <h1 class="display-4 mb-4">
+                    <i class="fas fa-microscope me-3"></i>
+                    Prophy API Client Sample
+                </h1>
+                <p class="lead mb-4">
+                    Explore the power of scientific knowledge management with this comprehensive 
+                    demonstration of the Prophy API Client library for .NET Framework 4.8.
+                </p>
+                <a href="@Url.Action("Upload", "Manuscript")" class="btn btn-prophy btn-lg me-3">
+                    <i class="fas fa-upload me-2"></i>Try Upload Demo
+                </a>
+                <a href="#features" class="btn btn-outline-light btn-lg">
+                    <i class="fas fa-info-circle me-2"></i>Learn More
+                </a>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Features Section -->
+<section id="features" class="py-5">
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-12 text-center mb-5">
+                <h2 class="display-5 mb-3">API Features Demonstrated</h2>
+                <p class="text-muted">This sample showcases all major capabilities of the Prophy API</p>
+            </div>
+        </div>
+        
+        <div class="row g-4">
+            <!-- Manuscript Upload -->
+            <div class="col-md-6 col-lg-4">
+                <div class="card h-100 text-center p-4">
+                    <div class="feature-icon">
+                        <i class="fas fa-file-upload"></i>
+                    </div>
+                    <h5 class="card-title">Manuscript Upload</h5>
+                    <p class="card-text">
+                        Upload PDF, DOC, or DOCX manuscripts with metadata and receive 
+                        intelligent referee candidate recommendations.
+                    </p>
+                    <div class="mt-auto">
+                        <a href="@Url.Action("Upload", "Manuscript")" class="btn btn-prophy">
+                            <i class="fas fa-upload me-1"></i>Try Upload
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Referee Finding -->
+            <div class="col-md-6 col-lg-4">
+                <div class="card h-100 text-center p-4">
+                    <div class="feature-icon">
+                        <i class="fas fa-user-tie"></i>
+                    </div>
+                    <h5 class="card-title">Referee Discovery</h5>
+                    <p class="card-text">
+                        Get AI-powered referee candidate recommendations with relevance scoring, 
+                        conflict of interest detection, and detailed metrics.
+                    </p>
+                    <div class="mt-auto">
+                        <a href="@Url.Action("Upload", "Manuscript")" class="btn btn-outline-primary">
+                            <i class="fas fa-search me-1"></i>Find Referees
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Journal Recommendations -->
+            <div class="col-md-6 col-lg-4">
+                <div class="card h-100 text-center p-4">
+                    <div class="feature-icon">
+                        <i class="fas fa-journal-whills"></i>
+                    </div>
+                    <h5 class="card-title">Journal Recommendations</h5>
+                    <p class="card-text">
+                        Discover the most suitable journals for your manuscript based on 
+                        content analysis and relevance scoring.
+                    </p>
+                    <div class="mt-auto">
+                        <a href="@Url.Action("Upload", "Manuscript")" class="btn btn-outline-primary">
+                            <i class="fas fa-book me-1"></i>Find Journals
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Author Groups -->
+            <div class="col-md-6 col-lg-4">
+                <div class="card h-100 text-center p-4">
+                    <div class="feature-icon">
+                        <i class="fas fa-users"></i>
+                    </div>
+                    <h5 class="card-title">Author Management</h5>
+                    <p class="card-text">
+                        Create and manage author groups with team-based permissions, 
+                        custom fields, and author linking capabilities.
+                    </p>
+                    <div class="mt-auto">
+                        <a href="@Url.Action("Index", "AuthorGroup")" class="btn btn-outline-primary">
+                            <i class="fas fa-users me-1"></i>Manage Authors
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Custom Fields -->
+            <div class="col-md-6 col-lg-4">
+                <div class="card h-100 text-center p-4">
+                    <div class="feature-icon">
+                        <i class="fas fa-cogs"></i>
+                    </div>
+                    <h5 class="card-title">Custom Fields</h5>
+                    <p class="card-text">
+                        Discover and handle organization-specific custom fields with 
+                        dynamic validation and type-safe handling.
+                    </p>
+                    <div class="mt-auto">
+                        <a href="@Url.Action("CustomFields", "Home")" class="btn btn-outline-primary">
+                            <i class="fas fa-cog me-1"></i>View Fields
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- JWT Authentication -->
+            <div class="col-md-6 col-lg-4">
+                <div class="card h-100 text-center p-4">
+                    <div class="feature-icon">
+                        <i class="fas fa-key"></i>
+                    </div>
+                    <h5 class="card-title">JWT Authentication</h5>
+                    <p class="card-text">
+                        Generate signed JWT tokens for seamless user authentication 
+                        and session management with the Prophy platform.
+                    </p>
+                    <div class="mt-auto">
+                        <a href="@Url.Action("JwtDemo", "Home")" class="btn btn-outline-primary">
+                            <i class="fas fa-sign-in-alt me-1"></i>JWT Demo
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Quick Start Section -->
+<section class="py-5 bg-light">
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-8 mx-auto">
+                <h3 class="text-center mb-4">
+                    <i class="fas fa-rocket me-2"></i>Quick Start Guide
+                </h3>
+                
+                <div class="row g-4">
+                    <div class="col-md-4 text-center">
+                        <div class="mb-3">
+                            <i class="fas fa-upload text-primary" style="font-size: 2rem;"></i>
+                        </div>
+                        <h6>1. Upload Manuscript</h6>
+                        <p class="text-muted small">
+                            Start by uploading a sample manuscript (PDF/DOC/DOCX) 
+                            to see the API in action.
+                        </p>
+                    </div>
+                    
+                    <div class="col-md-4 text-center">
+                        <div class="mb-3">
+                            <i class="fas fa-search text-success" style="font-size: 2rem;"></i>
+                        </div>
+                        <h6>2. View Results</h6>
+                        <p class="text-muted small">
+                            Explore referee candidates, journal recommendations, 
+                            and manuscript analysis results.
+                        </p>
+                    </div>
+                    
+                    <div class="col-md-4 text-center">
+                        <div class="mb-3">
+                            <i class="fas fa-users text-info" style="font-size: 2rem;"></i>
+                        </div>
+                        <h6>3. Manage Authors</h6>
+                        <p class="text-muted small">
+                            Create author groups and explore the full author 
+                            management capabilities.
+                        </p>
+                    </div>
+                </div>
+                
+                <div class="text-center mt-4">
+                    <a href="@Url.Action("Upload", "Manuscript")" class="btn btn-prophy btn-lg">
+                        <i class="fas fa-play me-2"></i>Start Demo Now
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- API Information Section -->
+<section class="py-5">
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-10 mx-auto">
+                <h3 class="text-center mb-4">
+                    <i class="fas fa-info-circle me-2"></i>About the Prophy API
+                </h3>
+                
+                <div class="api-response">
+                    <h6><i class="fas fa-server me-2"></i>API Configuration</h6>
+                    <div class="code-block">
+Base URL: https://www.prophy.ai/api/
+Authentication: X-ApiKey header
+Framework: .NET Framework 4.8
+Client Library: Prophy.ApiClient v1.0.0</div>
+                </div>
+                
+                <div class="row mt-4">
+                    <div class="col-md-6">
+                        <h6><i class="fas fa-check-circle text-success me-2"></i>Key Features</h6>
+                        <ul class="list-unstyled">
+                            <li><i class="fas fa-check text-success me-2"></i>Manuscript upload with file validation</li>
+                            <li><i class="fas fa-check text-success me-2"></i>AI-powered referee candidate discovery</li>
+                            <li><i class="fas fa-check text-success me-2"></i>Journal recommendation engine</li>
+                            <li><i class="fas fa-check text-success me-2"></i>Author group management with CRUD operations</li>
+                            <li><i class="fas fa-check text-success me-2"></i>Dynamic custom fields handling</li>
+                            <li><i class="fas fa-check text-success me-2"></i>JWT-based user authentication</li>
+                        </ul>
+                    </div>
+                    <div class="col-md-6">
+                        <h6><i class="fas fa-shield-alt text-primary me-2"></i>Security & Reliability</h6>
+                        <ul class="list-unstyled">
+                            <li><i class="fas fa-check text-success me-2"></i>Secure API key management</li>
+                            <li><i class="fas fa-check text-success me-2"></i>Comprehensive error handling</li>
+                            <li><i class="fas fa-check text-success me-2"></i>Request/response logging</li>
+                            <li><i class="fas fa-check text-success me-2"></i>File type and size validation</li>
+                            <li><i class="fas fa-check text-success me-2"></i>Async/await pattern support</li>
+                            <li><i class="fas fa-check text-success me-2"></i>HTTPS-only communication</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section> 

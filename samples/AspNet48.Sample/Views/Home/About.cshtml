@@ -1,0 +1,80 @@
+@{
+    ViewBag.Title = "About";
+}
+
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-lg-8 mx-auto">
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <h2 class="card-title mb-0">
+                        <i class="fas fa-info-circle me-2"></i>
+                        About Prophy API Client
+                    </h2>
+                </div>
+                <div class="card-body">
+                    <p class="lead">@ViewBag.Message</p>
+                    
+                    <div class="row mt-4">
+                        <div class="col-md-6">
+                            <h4><i class="fas fa-cogs me-2"></i>Technology Stack</h4>
+                            <ul class="list-unstyled">
+                                <li><i class="fas fa-check text-success me-2"></i>ASP.NET Framework 4.8</li>
+                                <li><i class="fas fa-check text-success me-2"></i>MVC 5</li>
+                                <li><i class="fas fa-check text-success me-2"></i>Bootstrap 5</li>
+                                <li><i class="fas fa-check text-success me-2"></i>Font Awesome Icons</li>
+                                <li><i class="fas fa-check text-success me-2"></i>Microsoft.Extensions.DependencyInjection</li>
+                                <li><i class="fas fa-check text-success me-2"></i>Microsoft.Extensions.Logging</li>
+                            </ul>
+                        </div>
+                        <div class="col-md-6">
+                            <h4><i class="fas fa-rocket me-2"></i>Features Demonstrated</h4>
+                            <ul class="list-unstyled">
+                                <li><i class="fas fa-upload text-primary me-2"></i>Manuscript Upload</li>
+                                <li><i class="fas fa-users text-primary me-2"></i>Referee Candidates</li>
+                                <li><i class="fas fa-book text-primary me-2"></i>Journal Recommendations</li>
+                                <li><i class="fas fa-user-friends text-primary me-2"></i>Author Group Management</li>
+                                <li><i class="fas fa-cog text-primary me-2"></i>Custom Fields Discovery</li>
+                                <li><i class="fas fa-key text-primary me-2"></i>JWT Authentication</li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <div class="mt-4">
+                        <h4><i class="fas fa-shield-alt me-2"></i>Security & Authentication</h4>
+                        <p>This sample application demonstrates secure integration with the Prophy API using:</p>
+                        <ul>
+                            <li><strong>API Key Authentication:</strong> All requests are authenticated using the X-ApiKey header</li>
+                            <li><strong>JWT Token Generation:</strong> Demonstrates creating JWT tokens for user login flows</li>
+                            <li><strong>Secure Configuration:</strong> API keys and sensitive data are managed through configuration</li>
+                            <li><strong>Error Handling:</strong> Comprehensive error handling and logging for all API interactions</li>
+                        </ul>
+                    </div>
+
+                    <div class="mt-4">
+                        <h4><i class="fas fa-code me-2"></i>Code Structure</h4>
+                        <p>The application follows ASP.NET MVC best practices:</p>
+                        <ul>
+                            <li><strong>Controllers:</strong> Handle HTTP requests and coordinate with services</li>
+                            <li><strong>Services:</strong> Encapsulate business logic and API interactions</li>
+                            <li><strong>Models:</strong> Define data structures and view models</li>
+                            <li><strong>Views:</strong> Provide responsive UI using Bootstrap</li>
+                            <li><strong>Dependency Injection:</strong> Manages service lifetimes and dependencies</li>
+                        </ul>
+                    </div>
+
+                    <div class="alert alert-info mt-4">
+                        <h5><i class="fas fa-lightbulb me-2"></i>Getting Started</h5>
+                        <p class="mb-2">To run this sample application:</p>
+                        <ol>
+                            <li>Configure your Prophy API key in the web.config file</li>
+                            <li>Build and run the application</li>
+                            <li>Navigate through the different features to see the API integration in action</li>
+                            <li>Check the logs for detailed information about API requests and responses</li>
+                        </ol>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div> 

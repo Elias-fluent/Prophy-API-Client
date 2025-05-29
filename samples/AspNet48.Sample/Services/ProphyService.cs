@@ -270,10 +270,27 @@ namespace AspNet48.Sample.Services
 
                 // Convert authors list to string list for compatibility
                 var authorNames = new List<string>();
-                if (viewModel.Authors != null)
+                
+                // First, add authors from the Authors collection
+                if (viewModel.Authors != null && viewModel.Authors.Count > 0)
                 {
                     authorNames.AddRange(viewModel.Authors.Select(a => a.Name ?? "Unknown Author"));
                 }
+                
+                // Also check for individual author fields (for single author form submissions)
+                if (!string.IsNullOrWhiteSpace(viewModel.AuthorName))
+                {
+                    authorNames.Add(viewModel.AuthorName);
+                }
+
+                // If no authors were provided, add a placeholder
+                if (authorNames.Count == 0)
+                {
+                    authorNames.Add("Unknown Author");
+                    _logger.LogWarning("No author information provided for manuscript upload, using placeholder");
+                }
+
+                _logger.LogDebug("Processed {Count} authors for manuscript upload", authorNames.Count);
 
                 // Create the upload request
                 var request = new ManuscriptUploadRequest

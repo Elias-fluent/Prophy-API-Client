@@ -61,13 +61,9 @@ namespace AspNet48.Sample.Services
 
             _logger.LogDebug("Creating Prophy API client for organization: {OrganizationCode}", organizationCode);
 
-            // Create a simple console logger factory for the client
-            var loggerFactory = LoggerFactory.Create(builder =>
-            {
-                builder.AddConsole();
-            });
-            
-            var clientLogger = loggerFactory.CreateLogger<ProphyApiClient>();
+            // Use a simple null logger for the client to avoid Microsoft.Extensions.Logging.Configuration dependency
+            // This avoids the complex dependency chain required by LoggerFactory.Create()
+            var clientLogger = Microsoft.Extensions.Logging.Abstractions.NullLogger<ProphyApiClient>.Instance;
 
             return new ProphyApiClient(apiKey, organizationCode, baseUrl, clientLogger);
         }
@@ -145,12 +141,8 @@ namespace AspNet48.Sample.Services
                 _logger.LogInformation("Generating JWT login URL for manuscript: {ManuscriptId}", manuscriptId);
 
                 // Create JWT token generator manually since Authentication module is not exposed
-                var loggerFactory = LoggerFactory.Create(builder =>
-                {
-                    builder.AddConsole();
-                });
-                
-                var jwtLogger = loggerFactory.CreateLogger<JwtTokenGenerator>();
+                // Use null logger to avoid Microsoft.Extensions.Logging.Configuration dependency
+                var jwtLogger = Microsoft.Extensions.Logging.Abstractions.NullLogger<JwtTokenGenerator>.Instance;
                 var jwtGenerator = new JwtTokenGenerator(jwtLogger);
 
                 var claims = new JwtLoginClaims

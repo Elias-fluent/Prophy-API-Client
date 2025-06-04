@@ -162,13 +162,30 @@ namespace Prophy.ApiClient.Modules
             {
                 _logger.LogInformation("Retrieving status for manuscript: {ManuscriptId}", manuscriptId);
 
-                var httpRequest = new HttpRequestMessage(HttpMethod.Get, $"external/proposal/{manuscriptId}/status/");
-                _authenticator.AuthenticateRequest(httpRequest);
+                // Use query parameters for authentication instead of headers (matching the working upload approach)
+                var apiKey = _authenticator.ApiKey ?? throw new InvalidOperationException("API key is required");
+                var organizationCode = _authenticator.OrganizationCode ?? throw new InvalidOperationException("Organization code is required");
+                
+                var queryString = $"?api_key={Uri.EscapeDataString(apiKey)}&organization={Uri.EscapeDataString(organizationCode)}";
+                var httpRequest = new HttpRequestMessage(HttpMethod.Get, $"external/proposal/{Uri.EscapeDataString(manuscriptId)}/status/{queryString}");
+                
+                // Don't use header authentication since the API expects query parameters/form data
+                // _authenticator.AuthenticateRequest(httpRequest);
 
                 var response = await _httpClient.SendAsync(httpRequest, cancellationToken);
+                
+                // Check if we got HTML instead of JSON (indicates auth failure or redirect)
+                var responseContent = await response.Content.ReadAsStringAsync();
+                if (responseContent.TrimStart().StartsWith("<!DOCTYPE", StringComparison.OrdinalIgnoreCase) || 
+                    responseContent.TrimStart().StartsWith("<html", StringComparison.OrdinalIgnoreCase))
+                {
+                    _logger.LogError("Received HTML response instead of JSON for manuscript status. This usually indicates authentication failure or wrong endpoint. Response starts with: {ResponseStart}", 
+                        responseContent.Substring(0, Math.Min(100, responseContent.Length)));
+                    throw new ProphyApiException("Authentication failed - received HTML login page instead of JSON response", "AUTH_FAILURE");
+                }
+                
                 await ErrorHandler.HandleResponseAsync(response, _logger);
 
-                var responseContent = await response.Content.ReadAsStringAsync();
                 var statusResponse = _jsonSerializer.Deserialize<ManuscriptUploadResponse>(responseContent);
 
                 _logger.LogDebug("Retrieved status for manuscript {ManuscriptId}: {Status}", 

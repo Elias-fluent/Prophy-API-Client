@@ -100,15 +100,15 @@
                     </h5>
                 </div>
                 <div class="card-body">
-                    @if (Model.HasRefereeCandidates && Model.RefereeCandidates?.Candidates != null && Model.RefereeCandidates.Candidates.Any())
+                    @if (Model.HasRefereeCandidates && Model.RefereeCandidates?.Recommendations != null && Model.RefereeCandidates.Recommendations.Any())
                     {
                         <p class="mb-3">
                             <i class="fas fa-info-circle me-1"></i>
-                            Found <strong>@Model.RefereeCandidates.Candidates.Count</strong> referee candidates
+                            Found <strong>@Model.RefereeCandidates.Recommendations.Count</strong> referee candidates
                         </p>
                         
                         <div class="referee-list">
-                            @foreach (var candidate in Model.RefereeCandidates.Candidates.Take(5))
+                            @foreach (var candidate in Model.RefereeCandidates.Recommendations.Take(5))
                             {
                                 <div class="referee-item mb-3 p-3 border rounded">
                                     <div class="d-flex justify-content-between align-items-start">
@@ -152,12 +152,12 @@
                             }
                         </div>
                         
-                        @if (Model.RefereeCandidates.Candidates.Count > 5)
+                        @if (Model.RefereeCandidates != null && Model.RefereeCandidates.Recommendations != null && Model.RefereeCandidates.Recommendations.Count > 5)
                         {
                             <div class="text-center">
                                 <button class="btn btn-outline-primary btn-sm" onclick="loadMoreReferees()">
                                     <i class="fas fa-plus me-1"></i>
-                                    Load More (@(Model.RefereeCandidates.Candidates.Count - 5) remaining)
+                                    Load More (@(Model.RefereeCandidates.Recommendations.Count - 5) remaining)
                                 </button>
                             </div>
                         }
@@ -235,7 +235,7 @@
                             }
                         </div>
                         
-                        @if (Model.JournalRecommendations.Recommendations.Count > 5)
+                        @if (Model.JournalRecommendations != null && Model.JournalRecommendations.Recommendations != null && Model.JournalRecommendations.Recommendations.Count > 5)
                         {
                             <div class="text-center">
                                 <button class="btn btn-outline-success btn-sm" onclick="loadMoreJournals()">
